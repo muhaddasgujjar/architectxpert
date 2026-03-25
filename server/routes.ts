@@ -5,7 +5,7 @@ import OpenAI from "openai";
 import { db } from "./db";
 import { conversations, messages } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { loadWeights, predict } from "./ml/model";
+import { predict } from "./ml/model";
 import { analyzeFloorplan } from "./ml/clustering";
 import { generateReport } from "./ml/generatePdf";
 import { generateFloorplanSvg, layoutRooms, generateLocalLayout, type FloorplanSpec } from "./ml/floorplanSvg";
@@ -55,14 +55,7 @@ STRICT RULES:
 
 You represent the ArchitectXpert platform — an AI-powered architectural floorplan generation and analysis tool.`;
 
-try {
-  const weightsPath = path.join(process.cwd(), "server/ml/weights.json");
-  const weightsData = JSON.parse(fs.readFileSync(weightsPath, "utf-8"));
-  loadWeights(weightsData);
-  console.log("ML model weights loaded successfully");
-} catch (err) {
-  console.error("Failed to load ML weights:", err);
-}
+
 
 export async function registerRoutes(
   httpServer: Server,
@@ -154,7 +147,7 @@ export async function registerRoutes(
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: chatHistory,
         stream: true,
         max_tokens: 500,
@@ -229,7 +222,7 @@ Return ONLY valid JSON with these exact keys:
 }`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1200,
         temperature: 0.4,
@@ -273,7 +266,7 @@ Return ONLY valid JSON with these exact keys:
       const mimeType = req.file.mimetype || "image/png";
 
       const validationResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -315,7 +308,7 @@ NOT architectural: selfies, notes, handwriting, screenshots of code, food photos
       }
 
       const analysisResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -456,7 +449,7 @@ Important Pakistani construction context:
         return res.status(400).json({ error: "Quality must be standard, premium, or luxury" });
       }
 
-      const result = predict({
+      const result = await predict({
         area: numArea,
         floors: numFloors,
         quality: quality as "standard" | "premium" | "luxury",
