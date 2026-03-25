@@ -1,0 +1,355 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0KML model weights loaded successfully
+6:48:17 PM [express] serving on port 5000
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+6:48:32 PM [express] GET /api/auth/user 401 in 2ms :: {"message":"Not authenticated"}
+6:50:05 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+6:51:26 PM [express] GET /api/auth/user 401 in 0ms :: {"message":"Not authenticated"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:51:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/Hero.tsx[22m
+6:52:23 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+6:52:40 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+6:53:54 PM [express] GET /api/auth/user 401 in 0ms :: {"message":"Not authenticated"}
+6:54:14 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+6:54:25 PM [express] POST /api/auth/login 200 in 993ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas"}
+6:54:26 PM [express] GET /api/auth/user 200 in 8ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+6:54:33 PM [express] GET /api/chat/conversations 200 in 10ms :: [{"id":12,"title":"What factors should I consider when sele...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T03:14:01.148Z"},{"id":11,"title":"How do I estimate building construction ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T03:13:43.334Z"},{"id":10,"title":"What are the best tips for designing an ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T02:52:52.765Z"},{"id":8,"title":"How do I estimate building construction ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T02:26:30.376Z"},{"id":7,"title":"How do I estimate building construction ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T02:26:06.382Z"},{"id":3,"title":"New Chat","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T01:45:58.879Z"}]
+6:54:46 PM [express] POST /api/chat/conversations 201 in 23ms :: {"id":14,"title":"What are the best tips for designing an ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-24T18:54:46.143Z"}
+6:54:54 PM [express] POST /api/chat/conversations/14/messages 200 in 8047ms
+6:56:38 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+6:57:10 PM [express] POST /api/auth/login 401 in 14ms :: {"message":"Invalid username or password"}
+6:57:20 PM [express] POST /api/auth/login 200 in 80ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas"}
+6:57:20 PM [express] GET /api/auth/user 200 in 6ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+6:57:59 PM [express] POST /api/tools/predict-cost 200 in 22ms :: {"predictedCost":4775109,"costPerSqft":4245,"confidenceLow":4202096,"confidenceHigh":5348122,"breakdown":{"greyStructure":2292052,"finishing":1050524,"electrical":477511,"plumbing":382009,"fixtures":573013},"modelInfo":{"architecture":"Neural Network (12→16→8→1) with ReLU activation","trainingDataPoints":2000,"features":["area_sqft","floors","quality_standard","quality_premium","quality_luxury","bedrooms","bathrooms","has_basement","has_garage","location_tier","area_x_floors","log_area"]}}
+6:58:19 PM [express] POST /api/tools/predict-cost 200 in 15ms :: {"predictedCost":4775109,"costPerSqft":4245,"confidenceLow":4202096,"confidenceHigh":5348122,"breakdown":{"greyStructure":2292052,"finishing":1050524,"electrical":477511,"plumbing":382009,"fixtures":573013},"modelInfo":{"architecture":"Neural Network (12→16→8→1) with ReLU activation","trainingDataPoints":2000,"features":["area_sqft","floors","quality_standard","quality_premium","quality_luxury","bedrooms","bathrooms","has_basement","has_garage","location_tier","area_x_floors","log_area"]}}
+6:59:16 PM [express] POST /api/tools/analyze-floorplan 400 in 8045ms :: {"error":"not_architectural","message":"This doesn't appear to be an architectural floor plan. The image is a payment confirmation screen and does not depict any architectural floor plan or building drawing.. Please upload a floor plan, blueprint, or architectural drawing."}
+7:00:33 PM [express] POST /api/tools/architecture-advisor 200 in 43189ms :: {"project_overview":"The project involves constructing a 2-floor, 2500 sq ft sustainable commercial office in Lahore, designed to prioritize energy efficiency, natural light, and adherence to Pakistani building codes. The vision is to create a biophilic workspace that aligns with LEED standards while staying within a budget of PKR 50 Lac – 1 Cr.","design_recommendations":["Incorporate large windows and skylights to maximize natural light and reduce reliance on artificial lighting, suitable for Lahore's sunny climate.","Use passive cooling techniques such as cross-ventilation and shaded outdoor spaces to combat Lahore's hot summers and reduce energy consumption.","Design a green rooftop or terrace with local vegetation to improve insulation and create a biophilic environment for employees.","Include open floor plans with flexible partitions to optimize space usage and allow for future adaptability in the office layout."],"material_suggestions":[{"name":"Ravi/Chenab sand","use":"Concrete mixing for foundations and columns","benefit":"Locally sourced, cost-effective, and ensures strong concrete bonding; approx. PKR 40-50 per cubic foot."},{"name":"Sargodha stone","use":"Aggregate for concrete and flooring","benefit":"Durable and widely available in Pakistan; approx. PKR 70-80 per cubic foot."},{"name":"Local marble (e.g., Ziarat white)","use":"Flooring and countertops","benefit":"Adds aesthetic value while being affordable; approx. PKR 250-400 per sq ft depending on quality."},{"name":"T-iron girders","use":"Roofing and structural support","benefit":"Cost-effective and strong for structural integrity; approx. PKR 120-150 per kg."}],"sustainability_tips":["Install solar panels to harness Lahore's abundant sunlight and reduce electricity bills.","Use energy-efficient LED lighting and appliances to minimize energy consumption.","Harvest rainwater through rooftop systems for landscaping and non-potable uses, reducing water wastage."],"building_codes":["Ensure compliance with PBC 2021 standards for structural safety and energy efficiency.","Follow LDA bylaws for commercial buildings, including parking requirements and setbacks.","Account for seismic zone considerations as per NBC Pakistan for structural stability."],"cost_breakdown":{"structure":30,"interior":25,"mechanical":20,"exterior":15,"permits_fees":10},"estimated_timeline":"The project is expected to take 10-12 months, including 2 months for design and approvals, 6-8 months for construction, and 2 months for finishing and handover.","risk_factors":["Fluctuating material costs due to market volatility in Pakistan.","Delays in obtaining LDA approvals and permits for commercial construction.","Challenges in maintaining sustainability goals within the budget constraints."],"space_optimization":"To optimize the layout for Lahore's climate, prioritize cross-ventilation by aligning windows and openings to prevailing wind directions. Use large windows with double-glazing to enhance natural light while reducing heat gain. Incorporate privacy screens or frosted glass partitions to balance openness with privacy. A central courtyard or green space can act as a cooling zone and provide a biophilic element, improving employee well-being and reducing the urban heat island effect."}
+7:00:46 PM [express] GET /api/chat/conversations 200 in 16ms :: [{"id":14,"title":"What are the best tips for designing an ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-24T18:54:46.143Z"},{"id":12,"title":"What factors should I consider when sele...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T03:14:01.148Z"},{"id":11,"title":"How do I estimate building construction ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T03:13:43.334Z"},{"id":10,"title":"What are the best tips for designing an ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T02:52:52.765Z"},{"id":8,"title":"How do I estimate building construction ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T02:26:30.376Z"},{"id":7,"title":"How do I estimate building construction ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T02:26:06.382Z"},{"id":3,"title":"New Chat","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-09T01:45:58.879Z"}]
+7:00:50 PM [express] POST /api/chat/conversations 201 in 9ms :: {"id":15,"title":"What are the best tips for designing an ...","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-24T19:00:50.324Z"}
+7:01:27 PM [express] POST /api/chat/conversations/15/messages 200 in 36132ms
+7:01:33 PM [express] POST /api/chat/conversations 201 in 11ms :: {"id":16,"title":"New Chat","userId":"9bce947c-7ee3-4678-8f79-fa181972591b","createdAt":"2026-03-24T19:01:32.993Z"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:05:26 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/HowItWorks.tsx[22m
+7:11:18 PM [express] GET /api/auth/user 304 in 5ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+7:11:52 PM [express] GET /api/auth/user 304 in 5ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:12:46 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/HowItWorks.tsx[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:12:56 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/HowItWorks.tsx[22m [33m(x3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:13:33 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/HowItWorks.tsx[22m [33m(x4)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:13:47 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/HowItWorks.tsx[22m [33m(x5)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:13:52 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/sections/HowItWorks.tsx[22m [33m(x6)[39m
+[replit-cartographer] Error processing /home/runner/workspace/client/src/components/sections/HowItWorks.tsx: SyntaxError: Expected corresponding JSX closing tag for <Fragment>. (370:14)
+    at toParseError [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parse-error.ts:95:45[90m)[39m
+    at raise [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/tokenizer/index.ts:1503:19[90m)[39m
+    at jsxParseElementAt [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/jsx/index.ts:519:16[90m)[39m
+    at jsxParseElement [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/jsx/index.ts:559:19[90m)[39m
+    at parseExprAtom [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/jsx/index.ts:573:21[90m)[39m
+    at parseExprSubscripts [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:734:23[90m)[39m
+    at parseUpdate [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:713:21[90m)[39m
+    at parseMaybeUnary [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:675:23[90m)[39m
+    at parseMaybeUnary [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3855:20[90m)[39m
+    at parseMaybeUnaryOrPrivate [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:409:14[90m)[39m
+    at parseExprOps [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:421:23[90m)[39m
+    at parseMaybeConditional [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:376:23[90m)[39m
+    at parseMaybeAssign [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:301:21[90m)[39m
+    at fn [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3708:23[90m)[39m
+    at tryParse [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/util.ts:174:20[90m)[39m
+    at parseMaybeAssign [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3707:20[90m)[39m
+    at callback [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:257:12[90m)[39m
+    at allowInAnd [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:3192:12[90m)[39m
+    at parseMaybeAssignAllowIn [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:256:17[90m)[39m
+    at parseMaybeAssignAllowInOrVoidPattern [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:3306:17[90m)[39m
+    at parseParenAndDistinguishExpression [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:1813:16[90m)[39m
+    at parseExprAtom [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:1162:21[90m)[39m
+    at parseExprAtom [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/jsx/index.ts:583:22[90m)[39m
+    at parseExprSubscripts [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:734:23[90m)[39m
+    at parseUpdate [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:713:21[90m)[39m
+    at parseMaybeUnary [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:675:23[90m)[39m
+    at parseMaybeUnary [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3855:20[90m)[39m
+    at parseMaybeUnaryOrPrivate [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:409:14[90m)[39m
+    at parseExprOps [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:421:23[90m)[39m
+    at parseMaybeConditional [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:376:23[90m)[39m
+    at parseMaybeAssign [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:301:21[90m)[39m
+    at parseMaybeAssign [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3727:22[90m)[39m
+    at parseExpressionBase [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:226:23[90m)[39m
+    at callback [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:217:39[90m)[39m
+    at allowInAnd [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:3187:16[90m)[39m
+    at parseExpression [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:217:17[90m)[39m
+    at parseReturnStatement [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1110:28[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:538:21[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3185:20[90m)[39m
+    at parseStatementLike [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:477:17[90m)[39m
+    at parseStatementListItem [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:426:17[90m)[39m
+    at parseBlockOrModuleBlockBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1439:16[90m)[39m
+    at parseBlockBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1412:10[90m)[39m
+    at parseBlock [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1380:10[90m)[39m
+    at parseFunctionBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:2616:24[90m)[39m
+    at parseArrowExpression [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:2553:10[90m)[39m
+    at parseParenAndDistinguishExpression [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:1837:12[90m)[39m
+    at parseExprAtom [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:1162:21[90m)[39m
+    at parseExprAtom [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/jsx/index.ts:583:22[90m)[39m
+    at parseExprSubscripts [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:734:23[90m)[39m {
+  code: [32m'BABEL_PARSER_SYNTAX_ERROR'[39m,
+  reasonCode: [32m'MissingClosingTagElement'[39m,
+  loc: Position { line: [33m370[39m, column: [33m14[39m, index: [33m15080[39m },
+  pos: [33m15080[39m,
+  syntaxPlugin: [32m'jsx'[39m
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:13:52 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: /home/runner/workspace/client/src/components/sections/HowItWorks.tsx: Expected corresponding JSX closing tag for <Fragment>. (370:14)
+
+[0m [90m 368 |[31m                   [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 369 |[31m                 )}
+[31m[1m>[22m[31m[90m 370 |[31m               [33m<[31m[33m/[31m[33m>[31m
+ [90m     |[31m               [31m[1m^[22m[31m
+ [90m 371 |[31m             )[33m;[31m
+ [90m 372 |[31m           })}
+ [90m 373 |[31m         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36m/home/runner/workspace/client/src/components/sections/HowItWorks.tsx[39m:370:14
+[33m  368 |                    </motion.div>
+  369 |                  )}
+  370 |                </>
+      |                ^
+  371 |              );
+  372 |            })}[39m
+      at toParseError (/home/runner/workspace/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at raise (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1503:19)
+      at jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:519:16)
+      at jsxParseElement (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:559:19)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:573:21)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:734:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:713:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:675:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3855:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:409:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:421:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:376:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at fn (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3708:23)
+      at tryParse (/home/runner/workspace/node_modules/@babel/parser/src/parser/util.ts:174:20)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3707:20)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3192:12)
+      at parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at parseMaybeAssignAllowInOrVoidPattern (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3306:17)
+      at parseParenAndDistinguishExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1813:16)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1162:21)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:734:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:713:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:675:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3855:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:409:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:421:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:376:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3727:22)
+      at parseExpressionBase (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:226:23)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:217:39)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3187:16)
+      at parseExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:217:17)
+      at parseReturnStatement (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1110:28)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:538:21)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3185:20)
+      at parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:477:17)
+      at parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:426:17)
+      at parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1439:16)
+      at parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1412:10)
+      at parseBlock (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1380:10)
+      at parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:2616:24)
+      at parseArrowExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:2553:10)
+      at parseParenAndDistinguishExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1837:12)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1162:21)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:734:23)
+[1G[0K⠙[1G[0K[1mnpm[22m [96mnotice[39m
+[1mnpm[22m [96mnotice[39m New [31mmajor[39m version of npm available! [31m10.8.2[39m -> [34m11.12.0[39m
+[1mnpm[22m [96mnotice[39m Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.12.0[39m
+[1mnpm[22m [96mnotice[39m To update run: [4mnpm install -g npm@11.12.0[24m
+[1mnpm[22m [96mnotice[39m
+[1G[0K⠙[1G[0K

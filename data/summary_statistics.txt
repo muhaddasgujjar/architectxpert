@@ -1,0 +1,24 @@
+COST ESTIMATION DATASET — SUMMARY STATISTICS
+==================================================
+
+Total Samples: 2000
+Cost Range: PKR 2,769,592 — PKR 403,955,893
+
+BY QUALITY TIER:
+  standard   | 790 samples | Avg: PKR 31,416,094 | Min: PKR 2,769,592 | Max: PKR 119,796,628
+  premium    | 726 samples | Avg: PKR 57,973,289 | Min: PKR 5,149,017 | Max: PKR 231,838,020
+  luxury     | 484 samples | Avg: PKR 102,260,668 | Min: PKR 7,423,006 | Max: PKR 403,955,893
+
+BY LOCATION TIER:
+  Tier 1 (Major)     | 805 samples | Avg: PKR 65,173,064
+  Tier 2 (Mid)       | 819 samples | Avg: PKR 56,600,742
+  Tier 3 (Small)     | 376 samples | Avg: PKR 46,758,408
+
+FEATURES USED IN MODEL:
+  area_sqft, floors, quality (one-hot), bedrooms, bathrooms,
+  has_basement, has_garage, location_tier, area×floors, log(area)
+
+MODEL: Neural Network (12→16→8→1), ReLU, Adam optimizer
+MAPE: 7.11% on training data
+
+Generated: 2026-03-09T21:46:25.606Z

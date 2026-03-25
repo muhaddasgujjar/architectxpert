@@ -1,0 +1,85 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0KML model weights loaded successfully
+7:15:26 PM [express] serving on port 5000
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+7:15:32 PM [express] GET /api/auth/user 200 in 7ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+7:15:33 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+7:16:21 PM [express] GET /api/auth/user 304 in 4ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+7:16:30 PM [express] GET /api/auth/user 304 in 4ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+7:17:32 PM [express] GET /api/auth/user 304 in 7ms :: {"id":"9bce947c-7ee3-4678-8f79-fa181972591b","username":"muhaddas","createdAt":"2026-03-09T00:15:29.890Z"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:26:11 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:26:16 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m7:26:24 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/layout/Navbar.tsx, /src/index.css[22m
