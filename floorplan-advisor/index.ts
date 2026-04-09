@@ -1,9 +1,14 @@
-import express, { type Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import cors from "cors";
 import OpenAI from "openai";
+import path from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { db } from "./db.js";
 import { conversations, messages } from "@architect/shared";
 import { eq, desc, and } from "drizzle-orm";
+
+const execFileAsync = promisify(execFile);
 
 const app = express();
 app.use(cors());
@@ -30,7 +35,7 @@ async function verifyConversationOwnership(conversationId: number, userId: strin
 const SYSTEM_PROMPT = `You are ArchitectXpert AI — a premium architectural assistant specializing in building design...
 (Microservice extracted from original routes)`;
 
-app.get("/api/chat/conversations", async (req: Request, res: Response) => {
+app.get("/api/chat/conversations", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = requireAuth(req, res);
     if (!userId) return;
@@ -41,7 +46,7 @@ app.get("/api/chat/conversations", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/chat/conversations", async (req: Request, res: Response) => {
+app.post("/api/chat/conversations", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = requireAuth(req, res);
     if (!userId) return;
@@ -53,14 +58,14 @@ app.post("/api/chat/conversations", async (req: Request, res: Response) => {
   }
 });
 
-app.delete("/api/chat/conversations/:id", async (req: Request, res: Response) => {
+app.delete("/api/chat/conversations/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = requireAuth(req, res);
     if (!userId) return;
     const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: "Invalid conversation ID" });
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
     const isOwner = await verifyConversationOwnership(id, userId);
-    if (!isOwner) return res.status(404).json({ error: "Conversation not found" });
+    if (!isOwner) { res.status(404).json({ error: "Conversation not found" }); return; }
     await db.delete(messages).where(eq(messages.conversationId, id));
     await db.delete(conversations).where(eq(conversations.id, id));
     res.status(204).send();
@@ -69,14 +74,14 @@ app.delete("/api/chat/conversations/:id", async (req: Request, res: Response) =>
   }
 });
 
-app.get("/api/chat/conversations/:id/messages", async (req: Request, res: Response) => {
+app.get("/api/chat/conversations/:id/messages", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = requireAuth(req, res);
     if (!userId) return;
     const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: "Invalid conversation ID" });
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
     const isOwner = await verifyConversationOwnership(id, userId);
-    if (!isOwner) return res.status(404).json({ error: "Conversation not found" });
+    if (!isOwner) { res.status(404).json({ error: "Conversation not found" }); return; }
     const msgs = await db.select().from(messages).where(eq(messages.conversationId, id)).orderBy(messages.createdAt);
     res.json(msgs);
   } catch (error) {
@@ -84,18 +89,19 @@ app.get("/api/chat/conversations/:id/messages", async (req: Request, res: Respon
   }
 });
 
-app.post("/api/chat/conversations/:id/messages", async (req: Request, res: Response) => {
+app.post("/api/chat/conversations/:id/messages", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = requireAuth(req, res);
     if (!userId) return;
     const conversationId = parseInt(req.params.id);
-    if (isNaN(conversationId)) return res.status(400).json({ error: "Invalid conversation ID" });
+    if (isNaN(conversationId)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
     const isOwner = await verifyConversationOwnership(conversationId, userId);
-    if (!isOwner) return res.status(404).json({ error: "Conversation not found" });
+    if (!isOwner) { res.status(404).json({ error: "Conversation not found" }); return; }
     const { content } = req.body;
 
     if (!content || typeof content !== "string" || content.length > 5000) {
-      return res.status(400).json({ error: "Message content is required (max 5000 chars)" });
+      res.status(400).json({ error: "Message content is required (max 5000 chars)" });
+      return;
     }
 
     await db.insert(messages).values({ conversationId, role: "user", content });
@@ -145,7 +151,11 @@ app.post("/api/chat/conversations/:id/messages", async (req: Request, res: Respo
   }
 });
 
-app.post("/api/tools/architecture-advisor", async (req: Request, res: Response) => {
+// ──────────────────────────────────────────────────────────────────────────
+//  Architecture Advisor — Python expert system (no OpenAI needed)
+// ──────────────────────────────────────────────────────────────────────────
+
+app.post("/api/tools/architecture-advisor", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = requireAuth(req, res);
     if (!userId) return;
@@ -153,40 +163,38 @@ app.post("/api/tools/architecture-advisor", async (req: Request, res: Response) 
     const { projectType, area, floors, location, budget, style, priorities, description } = req.body;
 
     if (!projectType || !area) {
-      return res.status(400).json({ error: "Project type and area are required" });
+      res.status(400).json({ error: "Project type and area are required" });
+      return;
     }
 
-    const prompt = `You are ArchitectXpert AI — a world-class architectural advisor specializing in Pakistan's construction market. A client has described their building project. Provide expert analysis and recommendations using Pakistani construction standards, local materials, and PKR (Pakistani Rupees) pricing.
-
-PROJECT DETAILS:
-- Building Type: ${projectType}
-- Total Area: ${area} sq ft
-- Floors: ${floors || "Not specified"}
-- Location/Climate: ${location || "Not specified (assume Pakistan)"}
-- Budget Range: ${budget || "Not specified"}
-- Preferred Style: ${style || "Not specified"}
-- Priorities: ${priorities || "Not specified"}
-- Additional Notes: ${description || "None"}
-
-Return ONLY valid JSON with exactly 9 specified keys representing overview, recommendations, materials, sustainability, codes, cost breakdown, timeline, risks, and space optimization.`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1200,
-      temperature: 0.4,
-      response_format: { type: "json_object" },
+    const inputJson = JSON.stringify({
+      projectType, area, floors, location, budget, style, priorities, description,
     });
 
-    let result: Record<string, any> = {};
-    try {
-      result = JSON.parse(completion.choices[0]?.message?.content || "{}");
-    } catch {
-      result = { project_overview: "Analysis could not be completed." };
+    console.log(`[floor-plan-advisor] Analyzing: ${projectType}, ${area} sqft, ${floors || 1} floors`);
+
+    const scriptPath = path.join(import.meta.dirname, "architecture_advisor.py");
+    const { stdout, stderr } = await execFileAsync("python", [scriptPath, inputJson], {
+      timeout: 15000,
+      maxBuffer: 5 * 1024 * 1024,
+    });
+
+    if (stderr) {
+      console.warn("[floor-plan-advisor] Python stderr:", stderr);
     }
 
+    const result = JSON.parse(stdout.trim());
+
+    if (result.error) {
+      console.error("[floor-plan-advisor] Python error:", result.error);
+      res.status(500).json({ error: "Analysis engine encountered an error" });
+      return;
+    }
+
+    console.log(`[floor-plan-advisor] Analysis complete: ${result.design_recommendations?.length || 0} recommendations`);
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[floor-plan-advisor] Error:", error.message);
     res.status(500).json({ error: "Failed to generate architectural analysis" });
   }
 });
@@ -194,4 +202,6 @@ Return ONLY valid JSON with exactly 9 specified keys representing overview, reco
 const port = process.env.PORT || 8003;
 app.listen(port, () => {
   console.log(`[floor-plan-advisor] serving on port ${port}`);
+  console.log(`[floor-plan-advisor] architecture advisor: Python expert system`);
 });
+

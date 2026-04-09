@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Building2, Loader2, Lightbulb, Leaf, Scale,
-  AlertTriangle, Clock, Maximize2, Hammer, ChevronRight, Sparkles
+  AlertTriangle, Clock, Maximize2, Hammer, ChevronRight, Sparkles, Download
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Link } from "wouter";
@@ -65,6 +65,7 @@ export default function ArchitectureAdvisorPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AdvisorResult | null>(null);
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   const [projectType, setProjectType] = useState("");
   const [area, setArea] = useState("");
@@ -119,6 +120,103 @@ export default function ArchitectureAdvisorPage() {
   const handleReset = () => {
     setResult(null);
     setError("");
+  };
+
+  const handleDownloadPdf = () => {
+    if (!result) return;
+    setDownloading(true);
+
+    try {
+      // Build a printable HTML document with all analysis data
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ArchitectXpert Report — ${projectType}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a14; color: #e0e0f0; padding: 40px; }
+    .header { background: #0d0d20; padding: 24px 32px; border-bottom: 3px solid #3b82f6; margin: -40px -40px 32px; }
+    .header h1 { font-size: 22px; color: #f0f0f5; margin-bottom: 4px; }
+    .header p { font-size: 11px; color: #888; }
+    .badge { display: inline-block; padding: 3px 10px; background: #3b82f6; color: white; border-radius: 12px; font-size: 10px; margin-right: 8px; }
+    h2 { font-size: 15px; color: #3b82f6; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #222; }
+    h3 { font-size: 13px; color: #fbbf24; margin: 16px 0 8px; }
+    p, li { font-size: 12px; line-height: 1.7; color: #c0c0d0; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    .card { background: #111122; border: 1px solid #222; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .meta { font-size: 11px; color: #666; margin-top: 4px; }
+    .cost-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a2e; }
+    .cost-label { color: #aaa; font-size: 12px; }
+    .cost-value { color: #3b82f6; font-weight: bold; font-size: 12px; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #222; text-align: center; font-size: 10px; color: #555; }
+    @media print { body { background: white; color: #222; } .card { border-color: #ddd; background: #f9f9f9; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>ArchitectXpert — Architecture Advisor Report</h1>
+    <p>${projectType} · ${area} sq ft · ${floors || 1} Floor${Number(floors) > 1 ? 's' : ''} · ${location || 'Pakistan'} · Generated ${new Date().toLocaleDateString()}</p>
+  </div>
+
+  <h2>📋 Project Overview</h2>
+  <div class="card"><p>${result.project_overview}</p></div>
+
+  <h2>💡 Design Recommendations</h2>
+  <div class="card"><ul>${(result.design_recommendations || []).map((r: string, i: number) => `<li><strong>${i + 1}.</strong> ${r}</li>`).join('')}</ul></div>
+
+  <h2>🔨 Material Suggestions</h2>
+  ${(result.material_suggestions || []).map((m: any) => `<div class="card"><h3>${m.name} <span class="badge">${m.use}</span></h3><p>${m.benefit}</p></div>`).join('')}
+
+  <h2>🌱 Sustainability Tips</h2>
+  <div class="card"><ul>${(result.sustainability_tips || []).map((t: string) => `<li>${t}</li>`).join('')}</ul></div>
+
+  <h2>📐 Building Codes</h2>
+  <div class="card"><ul>${(result.building_codes || []).map((c: string) => `<li>${c}</li>`).join('')}</ul></div>
+
+  ${result.cost_breakdown ? `<h2>💰 Cost Breakdown</h2><div class="card">${Object.entries(result.cost_breakdown).map(([k, v]) => `<div class="cost-row"><span class="cost-label">${k.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</span><span class="cost-value">${v}%</span></div>`).join('')}</div>` : ''}
+
+  <h2>⏱️ Estimated Timeline</h2>
+  <div class="card"><p>${result.estimated_timeline}</p></div>
+
+  <h2>⚠️ Risk Factors</h2>
+  <div class="card"><ul>${(result.risk_factors || []).map((r: string) => `<li>${r}</li>`).join('')}</ul></div>
+
+  <h2>📐 Space Optimization</h2>
+  <div class="card"><p>${result.space_optimization}</p></div>
+
+  <div class="footer">
+    <p>ArchitectXpert — AI-Powered Architectural Analysis Platform</p>
+    <p>Auto-generated report. Consult a licensed architect for final decisions.</p>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const printWin = window.open(url, '_blank');
+      if (printWin) {
+        printWin.addEventListener('load', () => {
+          printWin.print();
+          URL.revokeObjectURL(url);
+        });
+      } else {
+        // Fallback: direct download as HTML
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ArchitectXpert_Advisor_Report_${Date.now()}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      setError('Failed to generate PDF report');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (!user) {
@@ -482,6 +580,28 @@ export default function ArchitectureAdvisorPage() {
                   <h3 className="text-sm font-display font-semibold text-white/80">Space Optimization</h3>
                 </div>
                 <p className="text-[13px] text-white/45 leading-relaxed" data-testid="text-space">{result.space_optimization}</p>
+              </div>
+
+              {/* Download PDF Report */}
+              <div className="glass-panel rounded-2xl p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="w-4 h-4 text-white/20" />
+                    <div>
+                      <p className="text-[10px] text-white/25 font-mono">AI Architecture Advisor — Expert System Analysis</p>
+                      <p className="text-[9px] text-white/15 mt-0.5">Rule-based expert system with Pakistani construction standards</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleDownloadPdf}
+                    disabled={downloading}
+                    className="flex items-center gap-2 bg-accent-gold/10 border border-accent-gold/20 text-accent-gold px-5 py-2.5 rounded-xl text-xs font-medium hover:bg-accent-gold/20 transition-all disabled:opacity-40"
+                    data-testid="button-download-pdf"
+                  >
+                    {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    <span>Download Report</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}

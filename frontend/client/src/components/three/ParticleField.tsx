@@ -60,54 +60,64 @@ function Particles({ count = 800 }: { count?: number }) {
   );
 }
 
-function WireframeGlobe() {
-  const meshRef = useRef<THREE.Mesh>(null);
+function ArchitecturalGrid() {
+  const meshRef = useRef<THREE.Points>(null);
+
+  const geometry = useMemo(() => new THREE.PlaneGeometry(35, 35, 70, 70), []);
 
   useFrame((state) => {
     if (!meshRef.current) return;
     const time = state.clock.getElapsedTime();
-    meshRef.current.rotation.x = time * 0.05 + state.pointer.y * 0.1;
-    meshRef.current.rotation.y = time * 0.08 + state.pointer.x * 0.1;
+    
+    // Rotate very slowly
+    meshRef.current.rotation.z = time * 0.05;
+    
+    const positions = (geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
+    
+    // Map mouse to local space (approximate)
+    const targetX = state.pointer.x * 15;
+    const targetY = state.pointer.y * 15;
+    
+    for (let i = 0; i < positions.length; i += 3) {
+      const x = positions[i];
+      const y = positions[i + 1];
+      
+      const dist = Math.sqrt((x - targetX)**2 + (y - targetY)**2);
+      
+      // Base structural wave simulating data
+      let z = Math.sin(x * 0.5 + time * 0.5) * Math.cos(y * 0.5 + time * 0.5) * 0.3;
+      
+      // Interactive architectural "skyscrapers" rising on hover
+      if (dist < 4) {
+        z += (4 - dist) * 1.5;
+      }
+      
+      positions[i + 2] = z;
+    }
+    geometry.attributes.position.needsUpdate = true;
   });
 
   return (
-    <mesh ref={meshRef} position={[0, 0, -2]}>
-      <icosahedronGeometry args={[3, 2]} />
-      <meshBasicMaterial
-        wireframe
-        color="#3b82f6"
-        transparent
-        opacity={0.08}
-      />
-    </mesh>
-  );
-}
-
-function FloatingRings() {
-  const group = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!group.current) return;
-    const time = state.clock.getElapsedTime();
-    group.current.rotation.z = time * 0.03;
-    group.current.children.forEach((child, i) => {
-      child.rotation.x = time * 0.05 * (i + 1) * 0.3;
-      child.rotation.y = time * 0.03 * (i + 1) * 0.2;
-    });
-  });
-
-  return (
-    <group ref={group} position={[0, 0, -3]}>
-      {[2, 3.5, 5].map((radius, i) => (
-        <mesh key={i}>
-          <torusGeometry args={[radius, 0.005, 16, 100]} />
-          <meshBasicMaterial
-            color="#3b82f6"
-            transparent
-            opacity={0.12 - i * 0.03}
-          />
-        </mesh>
-      ))}
+    <group rotation={[-Math.PI / 2 + 0.4, 0, 0]} position={[0, -5, -8]}>
+      {/* Blueprint Wireframe Surface */}
+      <mesh geometry={geometry}>
+        <meshBasicMaterial 
+          color="#14B8A6" 
+          wireframe={true} 
+          transparent={true} 
+          opacity={0.15} 
+        />
+      </mesh>
+      {/* Glowing Architectural Nodes */}
+      <points ref={meshRef} geometry={geometry}>
+        <pointsMaterial 
+          size={0.06} 
+          color="#eab308" 
+          transparent={true} 
+          opacity={0.6}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
     </group>
   );
 }
@@ -153,9 +163,8 @@ export default function ParticleField() {
         }}
       >
         <ambientLight intensity={0.1} />
-        <Particles count={600} />
-        <WireframeGlobe />
-        <FloatingRings />
+        <Particles count={400} />
+        <ArchitecturalGrid />
       </Canvas>
     </div>
   );

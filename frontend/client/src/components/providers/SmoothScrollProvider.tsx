@@ -3,6 +3,7 @@ import Lenis from "lenis";
 
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
+  const rafId = useRef<number>(0);
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -15,12 +16,13 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
 
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId.current = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId.current = requestAnimationFrame(raf);
 
     return () => {
+      cancelAnimationFrame(rafId.current);
       lenis.destroy();
     };
   }, []);

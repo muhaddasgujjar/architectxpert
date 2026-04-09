@@ -1,16 +1,43 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, ArrowRight, CheckCircle } from "lucide-react";
+import emailjs from "@emailjs/browser";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [sending, setSending] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) return;
-    setSubscribed(true);
-    setEmail("");
+
+    setSending(true);
+
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_NEWSLETTER_TEMPLATE_ID,
+        { 
+          email: email,
+          user_email: email,
+          reply_to: email,
+          from_name: "Newsletter Subscriber",
+          message: `New newsletter subscription request from: ${email}`
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
+      setSubscribed(true);
+      setEmail("");
+    } catch (error) {
+      toast({ title: "Subscription Error", description: "Could not subscribe. Please try again.", variant: "destructive" });
+      console.error("Newsletter EmailJS Error:", error);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -56,10 +83,11 @@ export default function Newsletter() {
             </div>
             <button
               type="submit"
-              className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-accent-blue hover:bg-blue-500 text-white px-6 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/30 flex-shrink-0"
+              disabled={sending}
+              className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-accent-blue hover:bg-blue-500 text-white px-6 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/30 flex-shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
               data-testid="button-subscribe"
             >
-              <span>Subscribe</span>
+              <span>{sending ? "Subscribing..." : "Subscribe"}</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
             </button>
           </form>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,39 +6,58 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import Preloader from "@/components/ui/Preloader";
-import Chatbot from "@/components/ui/Chatbot";
-import NotFound from "@/pages/not-found";
-import LandingPage from "@/pages/landing";
-import WorkspacePage from "@/pages/workspace";
-import AuthPage from "@/pages/auth";
-import ContactPage from "@/pages/contact";
 import { Redirect } from "wouter";
 
-import ResourcesPage from "@/pages/resources";
-import ArticlePage from "@/pages/article";
-import ReportAnalysisPage from "@/pages/report-analysis";
-import EstimateCostPage from "@/pages/estimate-cost";
-import DataScientistPage from "@/pages/data-scientist";
-import UseCasesPage from "@/pages/use-cases";
-import FloorplanGenerationPage from "@/pages/floorplan-generation";
+// Lazy-load all pages — only the visited page is downloaded
+const LandingPage = lazy(() => import("@/pages/landing"));
+const WorkspacePage = lazy(() => import("@/pages/workspace"));
+const AuthPage = lazy(() => import("@/pages/auth"));
+const ContactPage = lazy(() => import("@/pages/contact"));
+const ResourcesPage = lazy(() => import("@/pages/resources"));
+const ArticlePage = lazy(() => import("@/pages/article"));
+const ReportAnalysisPage = lazy(() => import("@/pages/report-analysis"));
+const EstimateCostPage = lazy(() => import("@/pages/estimate-cost"));
+const DataScientistPage = lazy(() => import("@/pages/data-scientist"));
+const UseCasesPage = lazy(() => import("@/pages/use-cases"));
+const FloorplanGenerationPage = lazy(() => import("@/pages/floorplan-generation"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+import Demo3DPage from "@/pages/demo-three";
+
+// Lazy-load Chatbot — it's 36KB and only needed when user clicks it
+const Chatbot = lazy(() => import("@/components/ui/Chatbot"));
+
+// Minimal full-page spinner for lazy route transitions
+function PageFallback() {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-6 h-6 border-2 border-accent-blue/30 border-t-accent-blue rounded-full animate-spin" />
+        <p className="text-xs text-white/30 font-mono tracking-wider">Loading…</p>
+      </div>
+    </div>
+  );
+}
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={LandingPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/workspace" component={WorkspacePage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/blog">{() => <Redirect to="/resources?tab=blog" />}</Route>
-      <Route path="/resources/:id" component={ArticlePage} />
-      <Route path="/resources" component={ResourcesPage} />
-      <Route path="/use-cases" component={UseCasesPage} />
-      <Route path="/tools/floorplan-generation" component={FloorplanGenerationPage} />
-      <Route path="/tools/report-analysis" component={ReportAnalysisPage} />
-      <Route path="/tools/estimate-cost" component={EstimateCostPage} />
-      <Route path="/tools/data-scientist" component={DataScientistPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<PageFallback />}>
+      <Switch>
+        <Route path="/" component={LandingPage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/workspace" component={WorkspacePage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/blog">{() => <Redirect to="/resources?tab=blog" />}</Route>
+        <Route path="/resources/:id" component={ArticlePage} />
+        <Route path="/resources" component={ResourcesPage} />
+        <Route path="/use-cases" component={UseCasesPage} />
+        <Route path="/tools/floorplan-generation" component={FloorplanGenerationPage} />
+        <Route path="/tools/report-analysis" component={ReportAnalysisPage} />
+        <Route path="/tools/estimate-cost" component={EstimateCostPage} />
+        <Route path="/tools/data-scientist" component={DataScientistPage} />
+        <Route path="/demo-three" component={Demo3DPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -56,7 +75,9 @@ function AppContent() {
     <>
       <Preloader isVisible={showPreloader} text="Initializing ArchitectXpert" />
       <Router />
-      <Chatbot />
+      <Suspense fallback={null}>
+        <Chatbot />
+      </Suspense>
     </>
   );
 }

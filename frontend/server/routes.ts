@@ -29,7 +29,9 @@ export async function registerRoutes(
 
           // Fix: express.json() consumes the body before the proxy can forward it.
           // Re-stream the parsed body so the backend receives the data.
-          if (req.body && Object.keys(req.body).length > 0) {
+          // Only do this for JSON requests — multipart/form-data must stream through untouched.
+          const contentType = req.headers?.['content-type'] || '';
+          if (req.body && Object.keys(req.body).length > 0 && contentType.includes('application/json')) {
             const bodyData = JSON.stringify(req.body);
             proxyReq.setHeader('Content-Type', 'application/json');
             proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData).toString());

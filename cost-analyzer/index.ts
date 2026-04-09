@@ -1,4 +1,4 @@
-import express, { type Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import cors from "cors";
 import { predict } from "./model.js";
 
@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post("/api/tools/predict-cost", async (req: Request, res: Response) => {
+app.post("/api/tools/predict-cost", async (req: Request, res: Response): Promise<void> => {
   try {
     const { area, floors, quality, bedrooms, bathrooms, hasBasement, hasGarage, locationTier } = req.body;
 
@@ -18,13 +18,16 @@ app.post("/api/tools/predict-cost", async (req: Request, res: Response) => {
     const numLocation = Number(locationTier);
 
     if (!numArea || numArea < 100 || numArea > 100000) {
-      return res.status(400).json({ error: "Area must be between 100 and 100,000 sq ft" });
+      res.status(400).json({ error: "Area must be between 100 and 100,000 sq ft" });
+      return;
     }
     if (!numFloors || numFloors < 1 || numFloors > 5) {
-      return res.status(400).json({ error: "Floors must be between 1 and 5" });
+      res.status(400).json({ error: "Floors must be between 1 and 5" });
+      return;
     }
     if (!validQualities.includes(quality)) {
-      return res.status(400).json({ error: "Quality must be standard, premium, or luxury" });
+      res.status(400).json({ error: "Quality must be standard, premium, or luxury" });
+      return;
     }
 
     const result = await predict({
@@ -39,7 +42,8 @@ app.post("/api/tools/predict-cost", async (req: Request, res: Response) => {
     });
 
     if (!isFinite(result.predictedCost) || result.predictedCost <= 0) {
-      return res.status(500).json({ error: "Model returned invalid prediction" });
+      res.status(500).json({ error: "Model returned invalid prediction" });
+      return;
     }
 
     res.json(result);
@@ -53,3 +57,4 @@ const port = process.env.PORT || 8001;
 app.listen(port, () => {
   console.log(`[cost-analyzer] serving on port ${port}`);
 });
+

@@ -4,6 +4,7 @@ import { ArrowLeft, Hexagon, Send, Mail, MessageSquare, MapPin, Clock } from "lu
 import { useToast } from "@/hooks/use-toast";
 import PageParticles from "@/components/ui/PageParticles";
 import Navbar from "@/components/layout/Navbar";
+import emailjs from "@emailjs/browser";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -13,7 +14,7 @@ export default function ContactPage() {
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim() || !email.trim() || !message.trim()) {
@@ -22,14 +23,26 @@ export default function ContactPage() {
     }
 
     setSending(true);
-    setTimeout(() => {
-      setSending(false);
+
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_CONTACT_TEMPLATE_ID,
+        { name, email, subject, message },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
       setName("");
       setEmail("");
       setSubject("");
       setMessage("");
       toast({ title: "Message sent", description: "We'll get back to you within 24 hours." });
-    }, 1500);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to send message. Please try again.", variant: "destructive" });
+      console.error("EmailJS Error:", error);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -78,9 +91,9 @@ export default function ContactPage() {
 
             <div className="space-y-6">
               {[
-                { icon: Mail, label: "Email", value: "hello@architectxpert.ai" },
+                { icon: Mail, label: "Email", value: "architectxpert2@gmail.com" },
                 { icon: MessageSquare, label: "Live Chat", value: "Available Mon-Fri, 9am-6pm" },
-                { icon: MapPin, label: "Office", value: "San Francisco, CA" },
+                { icon: MapPin, label: "Office", value: "Sector C, DHA phase 6" },
                 { icon: Clock, label: "Response Time", value: "Within 24 hours" },
               ].map((item, i) => (
                 <motion.div

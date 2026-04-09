@@ -37,7 +37,7 @@ export interface PredictionResult {
 
 
 export async function predict(input: PredictionInput): Promise<PredictionResult> {
-  const scriptPath = path.join(process.cwd(), "model.py");
+  const scriptPath = path.join(import.meta.dirname, "model.py");
   
   try {
     const { stdout } = await execFileAsync("python", [scriptPath, JSON.stringify(input)]);

@@ -135,7 +135,7 @@ export default function Navbar() {
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            <Hexagon className="w-7 h-7 text-accent-blue" strokeWidth={1.5} />
+            <img src="/favicon.svg" alt="ArchitectXpert Logo" className="w-7 h-7" />
             <span className="font-display text-lg font-semibold tracking-tight">
               ArchitectXpert
             </span>
