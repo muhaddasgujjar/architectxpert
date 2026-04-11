@@ -10,7 +10,7 @@
     "report-analysis"
   ],
   "scripts": {
-    "dev:frontend": "npm --workspace=frontend run dev",
+    "dev:frontend": "npm --workspace=rest-express run dev",
     "dev:floorplan-generation": "npm --workspace=floorplan-generation run start",
     "dev:cost-analyzer": "npm --workspace=cost-analyzer run start",
     "dev:report-analysis": "npm --workspace=report-analysis run start",
