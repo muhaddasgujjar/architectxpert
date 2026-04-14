@@ -1,6 +1,29 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Check, Sparkles } from "lucide-react";
+import { use3DTilt, fadeUp, staggerContainer } from "@/lib/animations";
+
+// Per-card tilt wrapper
+function TiltCard({ children, popular, className }: { children: React.ReactNode; popular: boolean; className?: string }) {
+  const { rotateX, rotateY, onMouseMove, onMouseLeave } = use3DTilt(popular ? 9 : 7);
+  return (
+    <motion.div
+      style={{ rotateX, rotateY, transformPerspective: 1000 }}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      whileHover={{
+        y: popular ? -12 : -8,
+        boxShadow: popular
+          ? "0 30px 70px rgba(59,130,246,0.22)"
+          : "0 20px 50px rgba(0,0,0,0.5)",
+      }}
+      transition={{ duration: 0.35 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 const plans = [
   {
@@ -94,69 +117,89 @@ export default function Pricing() {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+        >
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              variants={fadeUp}
               transition={{ duration: 0.6, delay: 0.2 + i * 0.1 }}
               className={`relative group ${plan.popular ? "md:-mt-4 md:mb-[-16px]" : ""}`}
               data-testid={`card-pricing-${plan.name.toLowerCase()}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                  <div className="flex items-center gap-1.5 bg-accent-blue/20 border border-accent-blue/30 rounded-full px-3 py-1">
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="flex items-center gap-1.5 bg-accent-blue/20 border border-accent-blue/30 rounded-full px-3 py-1"
+                  >
                     <Sparkles className="w-3 h-3 text-accent-blue" />
                     <span className="text-[10px] font-medium text-accent-blue tracking-wider uppercase">Most Popular</span>
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
-              <div className={`glass-panel rounded-2xl p-6 sm:p-8 h-full relative overflow-hidden transition-all duration-500 ${
-                plan.popular
-                  ? "border-accent-blue/20 hover:border-accent-blue/40"
-                  : "hover:border-white/15"
-              }`}>
-                {plan.popular && (
-                  <div className="absolute inset-0 bg-gradient-to-b from-accent-blue/5 to-transparent" />
-                )}
+              <TiltCard popular={plan.popular}>
+                <div className={`glass-panel rounded-2xl p-6 sm:p-8 h-full relative overflow-hidden transition-all duration-500 ${
+                  plan.popular
+                    ? "border-accent-blue/20 hover:border-accent-blue/40"
+                    : "hover:border-white/15"
+                }`}>
+                  {plan.popular && (
+                    <div className="absolute inset-0 bg-gradient-to-b from-accent-blue/5 to-transparent" />
+                  )}
 
-                <div className="relative z-10">
-                  <h3 className="text-sm font-medium text-white/60 mb-2">{plan.name}</h3>
+                  <div className="relative z-10">
+                    <h3 className="text-sm font-medium text-white/60 mb-2">{plan.name}</h3>
 
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className={`font-display font-bold text-white ${plan.price.length > 8 ? "text-2xl sm:text-3xl" : "text-4xl"}`}>{plan.price}</span>
-                    {plan.period && <span className="text-sm text-white/30">{plan.period}</span>}
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className={`font-display font-bold text-white ${plan.price.length > 8 ? "text-2xl sm:text-3xl" : "text-4xl"}`}>{plan.price}</span>
+                      {plan.period && <span className="text-sm text-white/30">{plan.period}</span>}
+                    </div>
+
+                    <p className="text-xs text-white/30 mb-6">{plan.description}</p>
+
+                    <motion.a
+                      href="/auth"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`block w-full text-center py-3 rounded-full text-sm font-medium transition-all duration-300 mb-6 ${
+                        plan.popular
+                          ? "bg-accent-blue text-white hover:bg-blue-600 shadow-proximity-glow"
+                          : "glass-panel text-white/70 hover:text-white hover:border-white/20"
+                      }`}
+                      data-testid={`button-plan-${plan.name.toLowerCase()}`}
+                    >
+                      {plan.cta}
+                    </motion.a>
+
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, fi) => (
+                        <motion.li
+                          key={feature}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={isInView ? { opacity: 1, x: 0 } : {}}
+                          transition={{ delay: 0.4 + i * 0.1 + fi * 0.05 }}
+                          className="flex items-start gap-2.5"
+                        >
+                          <motion.div whileHover={{ scale: 1.2 }}>
+                            <Check className="w-4 h-4 text-accent-blue flex-shrink-0 mt-0.5" />
+                          </motion.div>
+                          <span className="text-sm text-white/40">{feature}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
                   </div>
-
-                  <p className="text-xs text-white/30 mb-6">{plan.description}</p>
-
-                  <a
-                    href="/auth"
-                    className={`block w-full text-center py-3 rounded-full text-sm font-medium transition-all duration-300 mb-6 ${
-                      plan.popular
-                        ? "bg-accent-blue text-white hover:bg-blue-600 shadow-proximity-glow"
-                        : "glass-panel text-white/70 hover:text-white hover:border-white/20"
-                    }`}
-                    data-testid={`button-plan-${plan.name.toLowerCase()}`}
-                  >
-                    {plan.cta}
-                  </a>
-
-                  <ul className="space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-accent-blue flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-white/40">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-              </div>
+              </TiltCard>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

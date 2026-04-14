@@ -1,7 +1,65 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Linkedin, Github, Globe, Mail } from "lucide-react";
+import { Linkedin, Github } from "lucide-react";
 import Newsletter from "./Newsletter";
+import { fadeUp, staggerContainer, use3DTilt } from "@/lib/animations";
+
+function TeamCard({ member, index, isInView }: {
+  member: typeof team[0];
+  index: number;
+  isInView: boolean;
+}) {
+  const { rotateX, rotateY, onMouseMove, onMouseLeave } = use3DTilt(6);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: 0.2 + index * 0.15 }}
+      style={{ rotateX, rotateY, transformPerspective: 1000 }}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      whileHover={{ y: -8, boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}
+      className={`glass-panel rounded-2xl p-8 sm:p-10 group transition-all duration-700 ${member.borderGlow}`}
+      data-testid={`team-card-${index}`}
+    >
+      <div className="flex items-start gap-5 mb-6">
+        <motion.div
+          whileHover={{ scale: 1.08, rotate: 3 }}
+          transition={{ type: "spring", stiffness: 300, damping: 18 }}
+          className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${member.gradient} flex items-center justify-center border border-white/[0.08] flex-shrink-0`}
+        >
+          <span className="text-xl font-display font-bold text-white/90">{member.initials}</span>
+        </motion.div>
+        <div className="pt-1">
+          <h3 className="text-lg font-display font-bold text-white/90 mb-1">{member.name}</h3>
+          <p className="text-[12px] font-mono text-accent-blue/70 uppercase tracking-wider">{member.role}</p>
+        </div>
+      </div>
+
+      <p className="text-sm text-white/35 leading-relaxed mb-6 group-hover:text-white/50 transition-colors duration-500">
+        {member.bio}
+      </p>
+
+      <div className="flex items-center gap-3 pt-4 border-t border-white/[0.04]">
+        {[
+          { href: member.links.linkedin, icon: Linkedin, label: `${member.name} LinkedIn`, cls: "hover:text-accent-blue hover:border-accent-blue/30 hover:bg-accent-blue/5" },
+          { href: member.links.github,   icon: Github,   label: `${member.name} GitHub`,   cls: "hover:text-white hover:border-white/20 hover:bg-white/[0.06]" },
+        ].map(({ href, icon: Icon, label, cls }, li) => (
+          <motion.a
+            key={li}
+            href={href}
+            whileHover={{ scale: 1.15, y: -2 }}
+            whileTap={{ scale: 0.9 }}
+            className={`w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-white/25 transition-all duration-300 ${cls}`}
+            aria-label={label}
+          >
+            <Icon className="w-3.5 h-3.5" />
+          </motion.a>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
 
 const team = [
   {
@@ -59,47 +117,7 @@ export default function CTA() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
           {team.map((member, i) => (
-            <motion.div
-              key={member.name}
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 + i * 0.15 }}
-              className={`glass-panel rounded-2xl p-8 sm:p-10 group transition-all duration-700 ${member.borderGlow}`}
-              data-testid={`team-card-${i}`}
-            >
-              <div className="flex items-start gap-5 mb-6">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${member.gradient} flex items-center justify-center border border-white/[0.08] flex-shrink-0 group-hover:scale-105 transition-transform duration-500`}>
-                  <span className="text-xl font-display font-bold text-white/90">{member.initials}</span>
-                </div>
-                <div className="pt-1">
-                  <h3 className="text-lg font-display font-bold text-white/90 mb-1">{member.name}</h3>
-                  <p className="text-[12px] font-mono text-accent-blue/70 uppercase tracking-wider">{member.role}</p>
-                </div>
-              </div>
-
-              <p className="text-sm text-white/35 leading-relaxed mb-6 group-hover:text-white/50 transition-colors duration-500">
-                {member.bio}
-              </p>
-
-              <div className="flex items-center gap-3 pt-4 border-t border-white/[0.04]">
-                <a
-                  href={member.links.linkedin}
-                  className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-white/25 hover:text-accent-blue hover:border-accent-blue/30 hover:bg-accent-blue/5 transition-all duration-300"
-                  aria-label={`${member.name} LinkedIn`}
-                  data-testid={`link-team-linkedin-${i}`}
-                >
-                  <Linkedin className="w-3.5 h-3.5" />
-                </a>
-                <a
-                  href={member.links.github}
-                  className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-white/25 hover:text-white hover:border-white/20 hover:bg-white/[0.06] transition-all duration-300"
-                  aria-label={`${member.name} GitHub`}
-                  data-testid={`link-team-github-${i}`}
-                >
-                  <Github className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </motion.div>
+            <TeamCard key={member.name} member={member} index={i} isInView={isInView} />
           ))}
         </div>
 

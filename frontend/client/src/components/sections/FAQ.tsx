@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { HelpCircle, ChevronDown } from "lucide-react";
+import { staggerContainer, fadeUp, defaultViewport } from "@/lib/animations";
 
 const faqs = [
   {
@@ -30,13 +31,14 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.05, duration: 0.5 }}
+      variants={fadeUp}
+      whileHover={open ? {} : { x: 3 }}
+      transition={{ duration: 0.3 }}
       className="glass-panel rounded-xl overflow-hidden"
     >
-      <button
+      <motion.button
         onClick={() => setOpen(!open)}
+        whileTap={{ scale: 0.99 }}
         className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left group"
         data-testid={`button-faq-${index}`}
         aria-expanded={open}
@@ -45,13 +47,13 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
           {question}
         </span>
         <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
+          animate={{ rotate: open ? 180 : 0, color: open ? "#3b82f6" : "rgba(255,255,255,0.3)" }}
           transition={{ duration: 0.3 }}
           className="flex-shrink-0"
         >
-          <ChevronDown className="w-4 h-4 text-white/30 group-hover:text-accent-blue transition-colors duration-300" />
+          <ChevronDown className="w-4 h-4 transition-colors duration-300" />
         </motion.div>
-      </button>
+      </motion.button>
       <AnimatePresence>
         {open && (
           <motion.div
@@ -106,13 +108,16 @@ export default function FAQ() {
           </p>
         </motion.div>
 
-        {isInView && (
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <FAQItem key={i} question={faq.question} answer={faq.answer} index={i} />
-            ))}
-          </div>
-        )}
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="space-y-3"
+        >
+          {faqs.map((faq, i) => (
+            <FAQItem key={i} question={faq.question} answer={faq.answer} index={i} />
+          ))}
+        </motion.div>
       </div>
     </section>
   );

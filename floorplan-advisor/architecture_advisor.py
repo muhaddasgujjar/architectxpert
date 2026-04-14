@@ -102,10 +102,20 @@ def detect_budget_tier(budget_str: str) -> str:
     return "standard"
 
 
+def _safe_int(val, default: int) -> int:
+    if val is None or val == "":
+        return default
+    try:
+        s = str(val).strip().replace(",", "")
+        return int(float(s)) if s else default
+    except (ValueError, TypeError):
+        return default
+
+
 def analyze(params: dict) -> dict:
     project_type = params.get("projectType", "Residential Home")
-    area = int(params.get("area", 1200))
-    floors = int(params.get("floors", 1) or 1)
+    area = _safe_int(params.get("area"), 1200)
+    floors = max(1, _safe_int(params.get("floors"), 1))
     location_str = params.get("location", "")
     budget_str = params.get("budget", "")
     style = params.get("style", "Modern / Contemporary")

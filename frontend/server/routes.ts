@@ -1,19 +1,23 @@
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 import type { Server } from "http";
 import { setupAuth } from "./auth";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { registerAdvisorGatewayRoutes } from "./advisorGateway";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  setupAuth(app);
+  await setupAuth(app);
+
+  // Chat + architecture advisor on this process (Passport session + shared DB).
+  // Must register before generic proxies so /api/chat/* is not forwarded to 8003.
+  registerAdvisorGatewayRoutes(app);
 
   // Configurable Microservice URLs for multi-repo environments
   const FLOORPLAN_URL = process.env.FLOORPLAN_SERVICE_URL || 'http://localhost:8000';
   const COST_URL = process.env.COST_SERVICE_URL || 'http://localhost:8001';
   const REPORT_URL = process.env.REPORT_SERVICE_URL || 'http://localhost:8002';
-  const ADVISOR_URL = process.env.ADVISOR_SERVICE_URL || 'http://localhost:8003';
 
   function makeProxy(target: string, paths: string[]) {
     return createProxyMiddleware({
@@ -45,14 +49,15 @@ export async function registerRoutes(
   // 1. Floor Plan Generator
   app.use(makeProxy(FLOORPLAN_URL, ['/api/tools/generate-floorplan']));
 
-  // 2. Cost Analyzer
-  app.use(makeProxy(COST_URL, ['/api/tools/predict-cost']));
+  // 2. Cost Analyzer (API endpoints + Folium map static file)
+  app.use(makeProxy(COST_URL, [
+    '/api/tools/predict-cost',
+    '/api/tools/predict-market-value',
+    '/maps',
+  ]));
 
   // 3. Report Analysis
   app.use(makeProxy(REPORT_URL, ['/api/tools/analyze-floorplan', '/api/tools/generate-report-pdf']));
-
-  // 4. Floor Plan Advisor
-  app.use(makeProxy(ADVISOR_URL, ['/api/tools/architecture-advisor', '/api/chat']));
 
   return httpServer;
 }

@@ -14,8 +14,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const openaiApiKey =
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY ||
+  process.env.OPENAI_API_KEY ||
+  "";
+
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  apiKey: openaiApiKey,
+  baseURL:
+    process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
+    process.env.OPENAI_BASE_URL ||
+    undefined,
 });
 
 function requireAuth(req: Request, res: Response): string | null {
@@ -53,7 +62,8 @@ app.post("/api/chat/conversations", async (req: Request, res: Response): Promise
     const { title } = req.body;
     const [conv] = await db.insert(conversations).values({ title: title || "New Chat", userId }).returning();
     res.status(201).json(conv);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[floorplan-advisor] create conversation:", error?.message || error);
     res.status(500).json({ error: "Failed to create conversation" });
   }
 });
@@ -101,6 +111,14 @@ app.post("/api/chat/conversations/:id/messages", async (req: Request, res: Respo
 
     if (!content || typeof content !== "string" || content.length > 5000) {
       res.status(400).json({ error: "Message content is required (max 5000 chars)" });
+      return;
+    }
+
+    if (!openaiApiKey) {
+      res.status(503).json({
+        error:
+          "OpenAI API key missing. Set AI_INTEGRATIONS_OPENAI_API_KEY or OPENAI_API_KEY in frontend/.env",
+      });
       return;
     }
 
@@ -174,28 +192,52 @@ app.post("/api/tools/architecture-advisor", async (req: Request, res: Response):
     console.log(`[floor-plan-advisor] Analyzing: ${projectType}, ${area} sqft, ${floors || 1} floors`);
 
     const scriptPath = path.join(import.meta.dirname, "architecture_advisor.py");
-    const { stdout, stderr } = await execFileAsync("python", [scriptPath, inputJson], {
-      timeout: 15000,
-      maxBuffer: 5 * 1024 * 1024,
-    });
+    const pyOpts = { timeout: 20_000, maxBuffer: 5 * 1024 * 1024 };
+
+    let stdout: string;
+    let stderr: string;
+    try {
+      if (process.platform === "win32") {
+        ({ stdout, stderr } = await execFileAsync("py", ["-3", scriptPath, inputJson], pyOpts));
+      } else {
+        ({ stdout, stderr } = await execFileAsync("python3", [scriptPath, inputJson], pyOpts));
+      }
+    } catch (firstErr: any) {
+      if (process.platform === "win32") {
+        ({ stdout, stderr } = await execFileAsync("python", [scriptPath, inputJson], pyOpts));
+      } else {
+        throw firstErr;
+      }
+    }
 
     if (stderr) {
       console.warn("[floor-plan-advisor] Python stderr:", stderr);
     }
 
-    const result = JSON.parse(stdout.trim());
+    let result: any;
+    try {
+      result = JSON.parse(stdout.trim());
+    } catch {
+      console.error("[floor-plan-advisor] Invalid JSON from Python:", stdout.slice(0, 500));
+      res.status(500).json({ error: "Analysis engine returned invalid output" });
+      return;
+    }
 
     if (result.error) {
       console.error("[floor-plan-advisor] Python error:", result.error);
-      res.status(500).json({ error: "Analysis engine encountered an error" });
+      res.status(500).json({ error: result.error || "Analysis engine encountered an error" });
       return;
     }
 
     console.log(`[floor-plan-advisor] Analysis complete: ${result.design_recommendations?.length || 0} recommendations`);
     res.json(result);
   } catch (error: any) {
-    console.error("[floor-plan-advisor] Error:", error.message);
-    res.status(500).json({ error: "Failed to generate architectural analysis" });
+    console.error("[floor-plan-advisor] Error:", error?.message || error);
+    const hint =
+      process.platform === "win32"
+        ? " Ensure Python 3 is installed (`py -3` or `python` in PATH)."
+        : " Ensure `python3` is installed and on PATH.";
+    res.status(500).json({ error: `Failed to generate architectural analysis. ${hint}` });
   }
 });
 

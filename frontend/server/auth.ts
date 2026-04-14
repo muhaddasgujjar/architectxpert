@@ -7,6 +7,7 @@ import { storage } from "./storage";
 import type { Express } from "express";
 import type { User } from "@shared/schema";
 import connectPgSimple from "connect-pg-simple";
+import { Pool } from "pg";
 import { pool } from "./db";
 
 const scryptAsync = promisify(scrypt);
@@ -29,22 +30,60 @@ declare global {
   }
 }
 
-export function setupAuth(app: Express) {
-  const PgSession = connectPgSimple(session);
+/**
+ * Probe the DB with a 3-second timeout BEFORE creating PgSession.
+ * connect-pg-simple calls _rawEnsureSessionStoreTable on the first request
+ * (not at construction time), so a try/catch around `new PgSession()` is
+ * not sufficient — we must test the connection ourselves first.
+ */
+async function buildSessionStore(): Promise<session.Store> {
+  const _url = new URL(process.env.DATABASE_URL!);
+  const probe = new Pool({
+    host:     _url.hostname,
+    port:     parseInt(_url.port || "5432", 10),
+    database: _url.pathname.replace(/^\//, ""),
+    user:     decodeURIComponent(_url.username),
+    password: decodeURIComponent(_url.password),
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 8_000,
+    max: 1,
+  });
 
+  try {
+    const client = await probe.connect();
+    client.release();
+    await probe.end();
+
+    const PgSession = connectPgSimple(session);
+    const store = new PgSession({
+      pool,
+      tableName: "user_sessions",
+      createTableIfMissing: true,
+    });
+    console.log("[auth] DB reachable — using PostgreSQL session store");
+    return store;
+  } catch (err: any) {
+    await probe.end().catch(() => {});
+    console.warn(
+      "[auth] DB unreachable, using in-memory session store (sessions won't persist across restarts):",
+      err.message
+    );
+    return new session.MemoryStore();
+  }
+}
+
+export async function setupAuth(app: Express) {
   if (!process.env.SESSION_SECRET) {
     throw new Error("SESSION_SECRET must be set");
   }
+
+  const store = await buildSessionStore();
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: new PgSession({
-      pool,
-      tableName: "user_sessions",
-      createTableIfMissing: true,
-    }),
+    store,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       httpOnly: true,

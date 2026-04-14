@@ -74,10 +74,16 @@ export default function Chatbot() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesScrollRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, []);
 
   useEffect(() => {
@@ -275,6 +281,7 @@ export default function Chatbot() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            data-lenis-prevent
             onClick={() => setIsExpanded(false)}
             data-testid="chatbot-backdrop"
           />
@@ -294,6 +301,7 @@ export default function Chatbot() {
                 ? "inset-0 m-auto w-[90vw] max-w-[720px] h-[80vh] max-h-[700px]"
                 : "bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[580px] max-h-[calc(100vh-120px)]"
             }`}
+            data-lenis-prevent
             style={{
               background: "linear-gradient(180deg, rgba(10,10,18,0.98) 0%, rgba(5,5,10,0.99) 100%)",
               border: "1px solid rgba(255,255,255,0.08)",
@@ -346,7 +354,10 @@ export default function Chatbot() {
                   </div>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4 custom-scrollbar">
+                <div
+                  ref={messagesScrollRef}
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y px-4 py-4 space-y-4 custom-scrollbar [scrollbar-gutter:stable]"
+                >
                   {isLoading ? (
                     <div className="flex items-center justify-center h-full">
                       <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
@@ -498,7 +509,7 @@ export default function Chatbot() {
                   </div>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y custom-scrollbar [scrollbar-gutter:stable]">
                   {tab === "home" && (
                     <div className="p-4 space-y-3">
                       <form onSubmit={handleSearchSubmit} className="relative">

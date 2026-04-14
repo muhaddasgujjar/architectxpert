@@ -1,10 +1,11 @@
 import { useRef, useEffect, useState, Suspense } from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import ObjectAssembly from "../three/ObjectAssembly";
 import { useAuth } from "@/hooks/use-auth";
+import { useMagnetic } from "@/lib/animations";
 
 const PHRASES = ["Design Smarter.", "Build Faster.", "Architect Better."];
 const TYPE_SPEED = 70;
@@ -102,26 +103,44 @@ function SpotlightButton({ children, className = "" }: { children: React.ReactNo
 }
 
 export default function Hero() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  // 3D canvas moves slower than scroll (parallax)
+  const canvasY  = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const textY    = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
   return (
     <section
+      ref={sectionRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
       data-testid="section-hero"
     >
-      {/* 3D Holographic Backdrop */}
-      <div className="absolute inset-0 z-0 pointer-events-auto">
+      {/* 3D Holographic Backdrop — parallax */}
+      <motion.div
+        style={{ y: canvasY }}
+        className="absolute inset-0 z-0 pointer-events-auto"
+      >
         <Canvas camera={{ position: [0, 0, 18], fov: 60 }} style={{ background: 'transparent' }}>
           <ambientLight intensity={1.5} />
           <Suspense fallback={null}>
              <ObjectAssembly />
           </Suspense>
         </Canvas>
-      </div>
+      </motion.div>
 
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-obsidian/30 to-obsidian z-[1] pointer-events-none" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-blue/10 rounded-full blur-[120px] z-0 pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gold/5 rounded-full blur-[100px] z-0 pointer-events-none" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-20 sm:pt-24 pointer-events-none">
+      {/* Text content — slower parallax */}
+      <motion.div
+        style={{ y: textY, opacity: bgOpacity }}
+        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-20 sm:pt-24 pointer-events-none"
+      >
         
         {/* We use pointer-events-none on the text container and pointer-events-auto on buttons so the user can hover the 3D background behind the text! */}
         <motion.div
@@ -159,14 +178,12 @@ export default function Hero() {
           transition={{ delay: 1.0, duration: 0.8 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pointer-events-auto"
         >
-          <SpotlightButton className="group inline-flex items-center gap-3 px-8 py-4 text-base font-medium text-white shadow-[0_0_30px_rgba(59,130,246,0.5)]">
-            <span>Enter Workspace</span>
-            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </SpotlightButton>
+          <MagneticSpotlightButton />
 
           <motion.a
             href="#studio"
-            className="inline-flex items-center gap-2 px-6 py-4 text-sm font-medium text-white/70 hover:text-white transition-colors duration-300"
+            whileHover={{ scale: 1.05, color: "rgba(255,255,255,1)" }}
+            className="inline-flex items-center gap-2 px-6 py-4 text-sm font-medium text-white/70 transition-colors duration-300"
             data-testid="link-explore"
           >
             Explore Studio
@@ -179,11 +196,64 @@ export default function Hero() {
           transition={{ delay: 1.4, duration: 1 }}
           className="mt-12 flex flex-wrap items-center justify-center gap-6 text-white/40 text-[10px] sm:text-xs font-mono tracking-widest uppercase pointer-events-auto"
         >
-          <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" />50K+ Designs</span>
-          <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />98% Accuracy</span>
-          <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />Real-time AI</span>
+          {[
+            { dot: "bg-blue-500",    label: "50K+ Designs" },
+            { dot: "bg-emerald-500", label: "98% Accuracy" },
+            { dot: "bg-yellow-500",  label: "Real-time AI" },
+          ].map(({ dot, label }) => (
+            <motion.span
+              key={label}
+              whileHover={{ scale: 1.08, color: "rgba(255,255,255,0.7)" }}
+              className="flex items-center gap-2 cursor-default"
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+              {label}
+            </motion.span>
+          ))}
         </motion.div>
-      </div>
+      </motion.div>
     </section>
+  );
+}
+
+function MagneticSpotlightButton() {
+  const { x, y, onMouseMove, onMouseLeave } = useMagnetic(0.3);
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = btn.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const angle = Math.atan2(py - rect.height / 2, px - rect.width / 2) * (180 / Math.PI);
+      btn.style.setProperty("--spotlight-angle", `${angle + 90}deg`);
+    };
+    btn.addEventListener("mousemove", handleMouseMove);
+    return () => btn.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  return (
+    <motion.div style={{ x, y }} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      <motion.button
+        ref={btnRef}
+        onClick={() => navigate(user ? "/workspace" : "/auth")}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.97 }}
+        className="spotlight-btn group inline-flex items-center gap-3 rounded-full px-8 py-4 text-base font-medium text-white shadow-[0_0_30px_rgba(59,130,246,0.5)]"
+        data-testid="button-enter-workspace"
+      >
+        <span>Enter Workspace</span>
+        <motion.div
+          animate={{ x: [0, 4, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <ArrowRight className="w-4 h-4" />
+        </motion.div>
+      </motion.button>
+    </motion.div>
   );
 }

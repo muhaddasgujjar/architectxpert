@@ -43,3 +43,15 @@ push_retry.log
 runining.txt
 server_error.log
 get_push_err.js
+
+# Python
+**/__pycache__/
+*.pyc
+
+# Cost analyzer — large / generated (GitHub 100MB file limit; keep locally)
+cost-analyzer/**/*.pkl
+cost-analyzer/house_price_map.html
+cost-analyzer/new_features_dataset.csv
+
+# Local scratch
+scratch.js

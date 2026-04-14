@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { use3DTilt, fadeUp, fadeLeft, fadeRight, staggerContainer, defaultViewport } from "@/lib/animations";
 import {
   ArrowLeft, Calculator, Layers, Ruler, Hammer, Paintbrush, Lightbulb,
   Droplets, Fence, Plus, Minus, Brain, Loader2, BedDouble, Bath,
@@ -10,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import PageParticles from "@/components/ui/PageParticles";
 import Navbar from "@/components/layout/Navbar";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
+import ROIAnalyzer from "@/components/ui/ROIAnalyzer";
 
 function formatPKR(amount: number): string {
   if (amount >= 10000000) return `PKR ${(amount / 10000000).toFixed(2)} Cr`;
@@ -43,6 +45,15 @@ interface MLPrediction {
     features: string[];
   };
 }
+
+const CITY_OPTIONS = [
+  { value: "islamabad",  label: "Islamabad" },
+  { value: "lahore",     label: "Lahore" },
+  { value: "karachi",    label: "Karachi" },
+  { value: "rawalpindi", label: "Rawalpindi" },
+  { value: "faisalabad", label: "Faisalabad" },
+  { value: "multan",     label: "Multan" },
+];
 
 const defaultMaterials: MaterialItem[] = [
   { name: "Cement (OPC)", icon: Layers, unit: "bag (50kg)", pricePerUnit: 1350, quantity: 0 },
@@ -78,8 +89,32 @@ const BREAKDOWN_LABELS: Record<string, string> = {
   fixtures: "Fixtures & Fittings",
 };
 
+// Animated counter hook
+function useCountUp(target: number, duration = 1.2) {
+  const [value, setValue] = useState(0);
+  const prevTarget = useRef(0);
+  useEffect(() => {
+    if (target === 0) { setValue(0); return; }
+    const start = prevTarget.current;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = Math.min((now - startTime) / (duration * 1000), 1);
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      setValue(Math.round(start + (target - start) * eased));
+      if (elapsed < 1) requestAnimationFrame(animate);
+      else { setValue(target); prevTarget.current = target; }
+    };
+    requestAnimationFrame(animate);
+  }, [target, duration]);
+  return value;
+}
+
 export default function EstimateCostPage() {
   const { user } = useAuth();
+  const pageRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: pageRef, offset: ["start start", "end start"] });
+  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+
   const [sqft, setSqft] = useState("");
   const [stories, setStories] = useState("1");
   const [quality, setQuality] = useState<"standard" | "premium" | "luxury">("standard");
@@ -92,6 +127,7 @@ export default function EstimateCostPage() {
   const [showEstimate, setShowEstimate] = useState(false);
   const [mlPrediction, setMlPrediction] = useState<MLPrediction | null>(null);
   const [mlLoading, setMlLoading] = useState(false);
+  const [city, setCity] = useState("lahore");
 
   const baseCostPerSqft = quality === "luxury" ? 5500 : quality === "premium" ? 3800 : 2500;
   const totalSqft = parseFloat(sqft) || 0;
@@ -127,11 +163,11 @@ export default function EstimateCostPage() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          area: totalSqft,
-          floors: storyCount,
+          area:         totalSqft,
+          floors:       storyCount,
           quality,
-          bedrooms: parseInt(bedrooms) || 3,
-          bathrooms: parseInt(bathrooms) || 2,
+          bedrooms:     parseInt(bedrooms)  || 3,
+          bathrooms:    parseInt(bathrooms) || 2,
           hasBasement,
           hasGarage,
           locationTier: parseInt(locationTier) || 2,
@@ -143,6 +179,7 @@ export default function EstimateCostPage() {
         setMlPrediction(data);
       }
     } catch {
+      // prediction error handled by empty state
     } finally {
       setMlLoading(false);
     }
@@ -159,22 +196,28 @@ export default function EstimateCostPage() {
     );
   }
 
+  const totalCostAnimated   = useCountUp(showEstimate ? Math.round(totalCost) : 0);
+  const { rotateX: mlRotX, rotateY: mlRotY, onMouseMove: mlMove, onMouseLeave: mlLeave } = use3DTilt(7);
+
   return (
-    <div className="min-h-screen bg-obsidian relative overflow-hidden">
+    <div ref={pageRef} className="min-h-screen bg-obsidian relative overflow-hidden">
       <PageParticles count={350} />
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Parallax background */}
+      <motion.div style={{ y: bgY }} className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-accent-gold/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-accent-blue/5 rounded-full blur-3xl" />
         <div className="noise-overlay" />
-      </div>
+      </motion.div>
 
       <Navbar />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors" data-testid="link-estimate-back">
-            <ArrowLeft className="w-4 h-4" /><span>Back to home</span>
-          </Link>
+        <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="mb-8">
+          <motion.div whileHover={{ x: -3 }} className="inline-block">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors" data-testid="link-estimate-back">
+              <ArrowLeft className="w-4 h-4" /><span>Back to home</span>
+            </Link>
+          </motion.div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-10">
@@ -198,8 +241,19 @@ export default function EstimateCostPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-3">
-            <div className="glass-panel rounded-2xl p-6 space-y-4">
+          <motion.div
+            variants={fadeLeft}
+            initial="hidden"
+            whileInView="show"
+            viewport={defaultViewport}
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-3"
+          >
+            <motion.div
+              whileHover={{ boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}
+              transition={{ duration: 0.4 }}
+              className="glass-panel rounded-2xl p-6 space-y-4"
+            >
               <h2 className="text-sm font-display font-semibold text-white flex items-center gap-2">
                 <Ruler className="w-4 h-4 text-accent-blue" />
                 Project Details
@@ -296,6 +350,19 @@ export default function EstimateCostPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="text-xs font-medium text-white/40 mb-1.5 block">City (for Market Value)</label>
+                <select
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); resetEstimate(); }}
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none"
+                >
+                  {CITY_OPTIONS.map(c => (
+                    <option key={c.value} value={c.value} className="bg-[#0c0c14]">{c.label}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   onClick={() => { setHasBasement(!hasBasement); resetEstimate(); }}
@@ -317,27 +384,51 @@ export default function EstimateCostPage() {
                 </button>
               </div>
 
-              <button
+              <motion.button
                 onClick={handleEstimate}
                 disabled={totalSqft <= 0}
+                whileHover={totalSqft > 0 ? { scale: 1.02, boxShadow: "0 0 28px rgba(59,130,246,0.45)" } : {}}
+                whileTap={totalSqft > 0 ? { scale: 0.97 } : {}}
                 className="w-full flex items-center justify-center gap-2 bg-accent-blue text-white py-3 rounded-xl text-sm font-medium shadow-proximity-glow hover:shadow-spotlight transition-all duration-500 disabled:opacity-40 disabled:cursor-not-allowed"
                 data-testid="button-calculate"
               >
                 <Calculator className="w-4 h-4" />
                 <span>Calculate & Predict</span>
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-3">
-            <div className="glass-panel rounded-2xl p-6 h-full">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="show"
+            viewport={defaultViewport}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="lg:col-span-3"
+          >
+            <motion.div
+              whileHover={{ boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}
+              transition={{ duration: 0.4 }}
+              className="glass-panel rounded-2xl p-6 h-full"
+            >
               <h2 className="text-sm font-display font-semibold text-white mb-4 flex items-center gap-2">
                 <Hammer className="w-4 h-4 text-accent-gold" />
                 Materials & Quantities
               </h2>
-              <div className="space-y-2 max-h-[300px] sm:max-h-[470px] overflow-y-auto pr-1 custom-scrollbar">
+              <div
+                className="space-y-2 max-h-[300px] sm:max-h-[470px] overflow-y-auto pr-1 custom-scrollbar"
+                data-cursor-mode="drag"
+              >
                 {materials.map((mat, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 bg-white/[0.02] rounded-lg px-3 py-2 border border-white/[0.04]">
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.03, duration: 0.35 }}
+                    whileHover={{ x: 3, backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.09)" }}
+                    className="flex items-center justify-between gap-2 bg-white/[0.02] rounded-lg px-3 py-2 border border-white/[0.04] transition-colors"
+                  >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <mat.icon className="w-3 h-3 text-white/20 flex-shrink-0" />
                       <div className="min-w-0">
@@ -346,13 +437,15 @@ export default function EstimateCostPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <button
+                      <motion.button
                         onClick={() => updateQuantity(i, -5)}
-                        className="w-6 h-6 rounded bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-all"
+                        whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.08)" }}
+                        whileTap={{ scale: 0.85 }}
+                        className="w-6 h-6 rounded bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-colors"
                         data-testid={`button-decrease-${i}`}
                       >
                         <Minus className="w-3 h-3" />
-                      </button>
+                      </motion.button>
                       <input
                         type="number"
                         value={mat.quantity}
@@ -364,22 +457,35 @@ export default function EstimateCostPage() {
                         className="w-14 text-center bg-white/[0.03] border border-white/[0.06] rounded px-1 py-1 text-[11px] text-white font-mono focus:outline-none focus:border-accent-blue/30"
                         data-testid={`input-material-${i}`}
                       />
-                      <button
+                      <motion.button
                         onClick={() => updateQuantity(i, 5)}
-                        className="w-6 h-6 rounded bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-all"
+                        whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.08)" }}
+                        whileTap={{ scale: 0.85 }}
+                        className="w-6 h-6 rounded bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-colors"
                         data-testid={`button-increase-${i}`}
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </motion.button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="lg:col-span-3">
-            <div className="glass-panel rounded-2xl p-6 h-full">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="show"
+            viewport={defaultViewport}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="lg:col-span-3"
+          >
+            <motion.div
+              whileHover={{ boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}
+              transition={{ duration: 0.4 }}
+              className="glass-panel rounded-2xl p-6 h-full"
+            >
               <h2 className="text-sm font-display font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="text-green-400 font-bold text-sm">₨</span>
                 Formula Estimate (PKR)
@@ -402,15 +508,20 @@ export default function EstimateCostPage() {
                     ))}
                   </div>
 
-                  <div className="bg-accent-blue/5 border border-accent-blue/10 rounded-xl p-4 text-center">
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                    className="bg-accent-blue/5 border border-accent-blue/10 rounded-xl p-4 text-center"
+                  >
                     <p className="text-[10px] text-white/25 font-mono uppercase mb-1">Formula Total</p>
                     <p className="text-2xl font-display font-bold text-accent-blue" data-testid="text-total-cost">
-                      {formatPKR(totalCost)}
+                      {formatPKR(totalCostAnimated)}
                     </p>
                     <p className="text-[10px] text-white/20 mt-1">
                       PKR {Math.round(totalCost / totalSqft).toLocaleString()}/sq ft
                     </p>
-                  </div>
+                  </motion.div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-white/[0.02] rounded-lg p-2.5 border border-white/[0.04]">
@@ -435,11 +546,25 @@ export default function EstimateCostPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:col-span-3">
-            <div className="glass-panel rounded-2xl p-6 h-full border-accent-blue/10">
+          <motion.div
+            variants={fadeRight}
+            initial="hidden"
+            whileInView="show"
+            viewport={defaultViewport}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-3"
+          >
+            <motion.div
+              style={{ rotateX: mlRotX, rotateY: mlRotY, transformPerspective: 1200 }}
+              onMouseMove={mlMove}
+              onMouseLeave={mlLeave}
+              whileHover={{ boxShadow: "0 24px 70px rgba(59,130,246,0.15)" }}
+              transition={{ duration: 0.4 }}
+              className="glass-panel rounded-2xl p-6 h-full border-accent-blue/10"
+            >
               <h2 className="text-sm font-display font-semibold text-white mb-4 flex items-center gap-2">
                 <Brain className="w-4 h-4 text-accent-blue" />
                 ML Prediction
@@ -538,9 +663,31 @@ export default function EstimateCostPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         </div>
+
+        {/* ── ROI Analyzer: Market Value + ROI + Map ───────────────────────── */}
+        {showEstimate && mlPrediction && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mt-6"
+          >
+            <ROIAnalyzer
+              constructionCost={mlPrediction.predictedCost}
+              features={{
+                area_sqft: totalSqft,
+                bedrooms:  parseInt(bedrooms)  || 3,
+                bathrooms: parseInt(bathrooms) || 2,
+                floors:    storyCount,
+                city,
+              }}
+            />
+          </motion.div>
+        )}
+
       </div>
     </div>
   );
