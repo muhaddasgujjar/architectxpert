@@ -1,0 +1,22 @@
+# ============================================================
+# ArchitectXpert — Python Dependencies
+# ============================================================
+# Install with:  pip install -r requirements.txt
+# Freeze with:   pip freeze > requirements.txt
+# ============================================================
+
+# --- Core ML / Data (cost-analyzer) ---
+numpy==2.4.4
+pandas==3.0.2
+scikit-learn==1.8.0
+joblib==1.5.3
+
+# --- Image Processing (report-analysis) ---
+pillow==12.2.0
+
+# --- Transitive Dependencies ---
+scipy==1.17.1
+threadpoolctl==3.6.0
+python-dateutil==2.9.0.post0
+six==1.17.0
+tzdata==2026.1
