@@ -47,7 +47,10 @@ export async function registerRoutes(
   }
 
   // 1. Floor Plan Generator
-  app.use(makeProxy(FLOORPLAN_URL, ['/api/tools/generate-floorplan']));
+  app.use(makeProxy(FLOORPLAN_URL, [
+    '/api/tools/generate-floorplan',
+    '/api/tools/generate-floorplan-dxf',
+  ]));
 
   // 2. Cost Analyzer (API endpoints + Folium map static file)
   app.use(makeProxy(COST_URL, [

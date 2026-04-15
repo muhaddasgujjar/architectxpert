@@ -13,10 +13,13 @@ import OpenAI from "openai";
 import { eq, desc, and } from "drizzle-orm";
 import { db } from "./db";
 import { conversations, messages } from "@shared/schema";
+import { buildRagContext } from "./rag";
 
 const execFileAsync = promisify(execFile);
 
-const SYSTEM_PROMPT = `You are ArchitectXpert AI — a premium architectural assistant specializing in building design, construction methods, and building codes in Pakistan. Give concise, practical answers. Prefer bullet points when listing options.`;
+const SYSTEM_PROMPT = `You are ArchitectXpert AI — a premium architectural assistant specializing in building design, construction methods, and building codes in Pakistan. Give concise, practical answers. Prefer bullet points when listing options.
+
+When "Retrieved knowledge" sections are provided, ground factual claims in them and mention when something is general guidance versus project-specific.`;
 
 const openaiApiKey =
   process.env.AI_INTEGRATIONS_OPENAI_API_KEY ||
@@ -198,8 +201,13 @@ export function registerAdvisorGatewayRoutes(app: Express): void {
         .where(eq(messages.conversationId, conversationId))
         .orderBy(messages.createdAt);
 
+      const ragBlock = await buildRagContext(content, openai);
+      const systemContent = ragBlock
+        ? `${SYSTEM_PROMPT}\n\n## Retrieved knowledge\n${ragBlock}`
+        : SYSTEM_PROMPT;
+
       const chatHistory: { role: "system" | "user" | "assistant"; content: string }[] = [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemContent },
         ...existingMsgs.map((m) => ({
           role: m.role as "user" | "assistant",
           content: m.content || "",

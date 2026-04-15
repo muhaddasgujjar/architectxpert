@@ -628,3 +628,290 @@ export function generateFloorplanSvg(rooms: Room[], spec: FloorplanSpec): string
   ${title}
 </svg>`;
 }
+
+// ─── DXF export (AutoCAD) ─────────────────────────────────────────────────────
+// Coordinates are exported in *feet* (approx.) based on totalArea scaling, so
+// the drawing opens with reasonable real-world-ish dimensions.
+function dxfLine(x1: number, y1: number, x2: number, y2: number, layer: string): string {
+  return [
+    "0", "LINE",
+    "8", layer,
+    "10", x1.toFixed(4),
+    "20", y1.toFixed(4),
+    "30", "0.0",
+    "11", x2.toFixed(4),
+    "21", y2.toFixed(4),
+    "31", "0.0",
+  ].join("\n") + "\n";
+}
+
+function dxfCircle(cx: number, cy: number, r: number, layer: string): string {
+  return [
+    "0", "CIRCLE",
+    "8", layer,
+    "10", cx.toFixed(4),
+    "20", cy.toFixed(4),
+    "30", "0.0",
+    "40", r.toFixed(4),
+  ].join("\n") + "\n";
+}
+
+function dxfArc(cx: number, cy: number, r: number, startDeg: number, endDeg: number, layer: string): string {
+  return [
+    "0", "ARC",
+    "8", layer,
+    "10", cx.toFixed(4),
+    "20", cy.toFixed(4),
+    "30", "0.0",
+    "40", r.toFixed(4),
+    "50", startDeg.toFixed(4),
+    "51", endDeg.toFixed(4),
+  ].join("\n") + "\n";
+}
+
+function dxfLwPolyline(points: Array<[number, number]>, closed: boolean, layer: string): string {
+  const head = ["0", "LWPOLYLINE", "8", layer, "90", String(points.length), "70", closed ? "1" : "0"];
+  const body: string[] = [];
+  for (const [x, y] of points) {
+    body.push("10", x.toFixed(4), "20", y.toFixed(4));
+  }
+  return [...head, ...body].join("\n") + "\n";
+}
+
+function dxfText(x: number, y: number, text: string, height: number, layer: string): string {
+  const safe = text.replace(/[\r\n\t]/g, " ").slice(0, 80);
+  return [
+    "0", "TEXT",
+    "8", layer,
+    // insertion point
+    "10", x.toFixed(4),
+    "20", y.toFixed(4),
+    "30", "0.0",
+    "40", height.toFixed(4),
+    "1", safe,
+    "7", "Arial",
+    "50", "0.0",
+    // center/middle alignment requires a second alignment point (11/21/31)
+    "72", "1", // center
+    "73", "2", // middle
+    "11", x.toFixed(4),
+    "21", y.toFixed(4),
+    "31", "0.0",
+  ].join("\n") + "\n";
+}
+
+export function generateFloorplanDxf(rooms: Room[], spec: FloorplanSpec): string {
+  if (!rooms.length) return "";
+
+  const minX = Math.min(...rooms.map((r) => r.px));
+  const minY = Math.min(...rooms.map((r) => r.py));
+  const maxX = Math.max(...rooms.map((r) => r.px + r.pw));
+  const maxY = Math.max(...rooms.map((r) => r.py + r.ph));
+  const totalW = maxX - minX;
+  const totalH = maxY - minY;
+
+  // Same scaling approach as SVG dimension labels (approx. feet).
+  const ftW = Math.sqrt(spec.totalArea * 1.48);
+  const ftH = spec.totalArea / ftW;
+  const pxPFH = totalW / ftW;
+  const pxPFV = totalH / ftH;
+
+  const toFtX = (px: number) => (px - minX) / pxPFH;
+  // DXF Y axis goes up; SVG Y goes down.
+  const toFtY = (py: number) => (maxY - py) / pxPFV;
+
+  // helper to convert px deltas to feet deltas
+  const dFtX = (dpx: number) => dpx / pxPFH;
+  const dFtY = (dpy: number) => dpy / pxPFV;
+
+  let entities = "";
+
+  // Outer boundary (thick-ish by drawing two offsets)
+  const outer = [
+    [toFtX(minX), toFtY(minY)] as [number, number],
+    [toFtX(maxX), toFtY(minY)] as [number, number],
+    [toFtX(maxX), toFtY(maxY)] as [number, number],
+    [toFtX(minX), toFtY(maxY)] as [number, number],
+  ];
+  entities += dxfLwPolyline(outer, true, "WALLS");
+
+  // Doors/windows settings (mirror SVG-ish)
+  const doorPx = 24; // approx leaf radius in px (SVG uses up to 24)
+  const winGapPx = 9; // visual wall gap thickness in SVG windows
+
+  function openingSpanPx(
+    wallLenPx: number,
+    pos01: number,
+    lenPx: number,
+  ): [number, number] {
+    const start = wallLenPx * pos01;
+    const a = Math.max(0, start);
+    const b = Math.min(wallLenPx, start + lenPx);
+    return [a, b];
+  }
+
+  // Room walls + windows + doors + labels
+  for (const r of rooms) {
+    const xL = r.px;
+    const xR = r.px + r.pw;
+    const yT = r.py;
+    const yB = r.py + r.ph;
+
+    // Build opening masks per wall in px-space, then emit broken wall lines.
+    const openingsTop: Array<[number, number]> = [];
+    const openingsBot: Array<[number, number]> = [];
+    const openingsLeft: Array<[number, number]> = [];
+    const openingsRight: Array<[number, number]> = [];
+
+    // Windows: create gaps in wall + add 2 parallel lines like SVG
+    for (const w of r.windows) {
+      if (w.wall === "top") openingsTop.push(openingSpanPx(r.pw, w.pos, w.len));
+      if (w.wall === "bottom") openingsBot.push(openingSpanPx(r.pw, w.pos, w.len));
+      if (w.wall === "left") openingsLeft.push(openingSpanPx(r.ph, w.pos, w.len));
+      if (w.wall === "right") openingsRight.push(openingSpanPx(r.ph, w.pos, w.len));
+    }
+
+    // Doors: gap in wall for leaf line, plus an ARC swing
+    for (const d of r.doors) {
+      const gapLenPx = doorPx; // approximate
+      if (d.wall === "top") openingsTop.push(openingSpanPx(r.pw, d.pos, gapLenPx));
+      if (d.wall === "bottom") openingsBot.push(openingSpanPx(r.pw, d.pos, gapLenPx));
+      if (d.wall === "left") openingsLeft.push(openingSpanPx(r.ph, d.pos, gapLenPx));
+      if (d.wall === "right") openingsRight.push(openingSpanPx(r.ph, d.pos, gapLenPx));
+    }
+
+    function emitBrokenH(yPx: number, xStartPx: number, xEndPx: number, ops: Array<[number, number]>, layer: string) {
+      const opsSorted = [...ops].sort((a, b) => a[0] - b[0]);
+      let cur = xStartPx;
+      for (const [a, b] of opsSorted) {
+        const oa = xStartPx + a;
+        const ob = xStartPx + b;
+        if (oa > cur + 0.5) {
+          entities += dxfLine(toFtX(cur), toFtY(yPx), toFtX(oa), toFtY(yPx), layer);
+        }
+        cur = Math.max(cur, ob);
+      }
+      if (xEndPx > cur + 0.5) {
+        entities += dxfLine(toFtX(cur), toFtY(yPx), toFtX(xEndPx), toFtY(yPx), layer);
+      }
+    }
+
+    function emitBrokenV(xPx: number, yStartPx: number, yEndPx: number, ops: Array<[number, number]>, layer: string) {
+      const opsSorted = [...ops].sort((a, b) => a[0] - b[0]);
+      let cur = yStartPx;
+      for (const [a, b] of opsSorted) {
+        const oa = yStartPx + a;
+        const ob = yStartPx + b;
+        if (oa > cur + 0.5) {
+          entities += dxfLine(toFtX(xPx), toFtY(cur), toFtX(xPx), toFtY(oa), layer);
+        }
+        cur = Math.max(cur, ob);
+      }
+      if (yEndPx > cur + 0.5) {
+        entities += dxfLine(toFtX(xPx), toFtY(cur), toFtX(xPx), toFtY(yEndPx), layer);
+      }
+    }
+
+    // Emit room wall lines, broken at openings
+    emitBrokenH(yT, xL, xR, openingsTop, "WALLS");
+    emitBrokenH(yB, xL, xR, openingsBot, "WALLS");
+    emitBrokenV(xL, yT, yB, openingsLeft, "WALLS");
+    emitBrokenV(xR, yT, yB, openingsRight, "WALLS");
+
+    // Emit window graphics (two parallel lines across the gap)
+    for (const w of r.windows) {
+      const t = winGapPx / 2;
+      if (w.wall === "top" || w.wall === "bottom") {
+        const y = w.wall === "top" ? yT : yB;
+        const x1 = xL + r.pw * w.pos;
+        const x2 = x1 + w.len;
+        entities += dxfLine(toFtX(x1), toFtY(y - t), toFtX(x2), toFtY(y - t), "WINDOWS");
+        entities += dxfLine(toFtX(x1), toFtY(y + t), toFtX(x2), toFtY(y + t), "WINDOWS");
+      } else {
+        const x = w.wall === "left" ? xL : xR;
+        const y1 = yT + r.ph * w.pos;
+        const y2 = y1 + w.len;
+        entities += dxfLine(toFtX(x - t), toFtY(y1), toFtX(x - t), toFtY(y2), "WINDOWS");
+        entities += dxfLine(toFtX(x + t), toFtY(y1), toFtX(x + t), toFtY(y2), "WINDOWS");
+      }
+    }
+
+    // Emit door leaf + swing arc (simple approximation)
+    for (const d of r.doors) {
+      const sz = doorPx;
+      const pos = d.pos;
+
+      if (d.wall === "top") {
+        const hx = xL + r.pw * pos, hy = yT;
+        const ex = hx + sz, ey = hy;
+        // leaf
+        entities += dxfLine(toFtX(hx), toFtY(hy), toFtX(ex), toFtY(ey), "DOORS");
+        // swing arc centered at hinge
+        entities += dxfArc(toFtX(hx), toFtY(hy), dFtX(sz), 270, 0, "DOORS");
+      } else if (d.wall === "bottom") {
+        const hx = xL + r.pw * pos, hy = yB;
+        const ex = hx + sz, ey = hy;
+        entities += dxfLine(toFtX(hx), toFtY(hy), toFtX(ex), toFtY(ey), "DOORS");
+        entities += dxfArc(toFtX(hx), toFtY(hy), dFtX(sz), 0, 90, "DOORS");
+      } else if (d.wall === "left") {
+        const hx = xL, hy = yT + r.ph * pos;
+        const ex = hx, ey = hy + sz;
+        entities += dxfLine(toFtX(hx), toFtY(hy), toFtX(ex), toFtY(ey), "DOORS");
+        entities += dxfArc(toFtX(hx), toFtY(hy), dFtY(sz), 0, 90, "DOORS");
+      } else {
+        const hx = xR, hy = yT + r.ph * pos;
+        const ex = hx, ey = hy + sz;
+        entities += dxfLine(toFtX(hx), toFtY(hy), toFtX(ex), toFtY(ey), "DOORS");
+        entities += dxfArc(toFtX(hx), toFtY(hy), dFtY(sz), 90, 180, "DOORS");
+      }
+    }
+
+    // Label at center (like SVG pill text; here just centered text)
+    const x1 = toFtX(xL);
+    const x2 = toFtX(xR);
+    const y1 = toFtY(yT);
+    const y2 = toFtY(yB);
+    const cx = (x1 + x2) / 2;
+    const cy = (y1 + y2) / 2;
+    const roomW = Math.abs(x2 - x1);
+    const roomH = Math.abs(y2 - y1);
+    const textH = Math.max(0.45, Math.min(roomW, roomH) * 0.12);
+    entities += dxfText(cx, cy, r.name, textH, "TEXT");
+  }
+
+  // North arrow (similar to SVG)
+  const nax = toFtX(maxX) + dFtX(40);
+  const nay = toFtY(minY) - dFtY(35);
+  entities += dxfCircle(nax, nay, 1.1, "ANNO");
+  entities += dxfLwPolyline([[nax, nay + 0.75], [nax + 0.25, nay], [nax, nay + 0.2], [nax - 0.25, nay]], true, "ANNO");
+  entities += dxfText(nax, nay + 1.7, "N", 0.5, "ANNO");
+
+  // Title (bottom-right-ish)
+  const lac = (spec.costEstimatePKR / 100000).toFixed(1);
+  entities += dxfText(toFtX(minX) + 0.5, toFtY(maxY) - 0.6, `ArchitectXpert Floor Plan | ${spec.style} | Est PKR ${lac} Lac`, 0.45, "ANNO");
+
+  // Minimal DXF
+  return [
+    "0", "SECTION",
+    "2", "HEADER",
+    "9", "$INSUNITS",
+    "70", "2",          // 2 = feet
+    "9", "$EXTMIN",
+    "10", "0.0",
+    "20", "0.0",
+    "30", "0.0",
+    "9", "$EXTMAX",
+    "10", (toFtX(maxX) + dFtX(80)).toFixed(4),
+    "20", (toFtY(minY) + dFtY(60)).toFixed(4),
+    "30", "0.0",
+    "0", "ENDSEC",
+    "0", "SECTION",
+    "2", "TABLES",
+    "0", "ENDSEC",
+    "0", "SECTION",
+    "2", "ENTITIES",
+    entities.trimEnd(),
+    "0", "ENDSEC",
+    "0", "EOF",
+  ].join("\n");
+}

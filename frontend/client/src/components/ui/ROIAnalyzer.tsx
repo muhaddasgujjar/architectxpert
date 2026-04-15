@@ -10,6 +10,8 @@ export interface ROIFeatures {
   bathrooms: number;
   floors: number;
   city: string;
+  /** Neighborhood / society name (optional; maps to Zameen RF location bucket when model is trained) */
+  location?: string;
   property_type?: string;
   purpose?: string;
   house_age?: number;
@@ -69,14 +71,18 @@ export default function ROIAnalyzer({ constructionCost, features }: ROIAnalyzerP
         bathrooms:     features.bathrooms,
         floors:        features.floors,
         city:          features.city,
+        location:      features.location ?? "",
         property_type: features.property_type ?? "house",
         purpose:       features.purpose       ?? "for sale",
         house_age:     features.house_age     ?? 0,
       }),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
+      .then(async (res) => {
+        const data = (await res.json()) as MarketResult & { error?: string };
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        return data;
       })
       .then((data: MarketResult) => {
         if (!cancelled) setMarket(data);
@@ -90,7 +96,7 @@ export default function ROIAnalyzer({ constructionCost, features }: ROIAnalyzerP
 
     return () => { cancelled = true; };
   }, [constructionCost, features.area_sqft, features.bedrooms, features.bathrooms,
-      features.floors, features.city, features.property_type, features.purpose, features.house_age]);
+      features.floors, features.city, features.location, features.property_type, features.purpose, features.house_age]);
 
   // ── Derived ROI values ─────────────────────────────────────────────────────
   const marketValue  = market?.predictedMarketValue ?? 0;
@@ -129,11 +135,11 @@ export default function ROIAnalyzer({ constructionCost, features }: ROIAnalyzerP
                 </div>
               </div>
             ) : error ? (
-              <div className="flex items-center justify-center h-44">
-                <div className="text-center">
+              <div className="flex items-center justify-center h-44 px-2">
+                <div className="text-center max-w-sm">
                   <TrendingUp className="w-10 h-10 text-white/8 mx-auto mb-3" />
                   <p className="text-xs text-white/25">Market model unavailable</p>
-                  <p className="text-[10px] text-white/15 mt-1">Ensure Python + joblib/scikit-learn are installed</p>
+                  <p className="text-[10px] text-white/15 mt-1 break-words">{error}</p>
                 </div>
               </div>
             ) : market ? (

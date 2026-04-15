@@ -181,7 +181,16 @@ export default function Chatbot() {
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to send message");
+      if (!res.ok) {
+        // Parse the error body for specific messages
+        let errorBody = "";
+        try { errorBody = (await res.json()).error || ""; } catch {}
+
+        if (res.status === 503 && errorBody.includes("API key")) {
+          throw new Error("API_KEY_MISSING");
+        }
+        throw new Error(errorBody || "Failed to send message");
+      }
 
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No reader");
@@ -225,14 +234,23 @@ export default function Chatbot() {
           }
         }
       }
-    } catch {
+    } catch (err: any) {
+      const errorMsg = err?.message || "";
+      let responseText: string;
+
+      if (errorMsg === "API_KEY_MISSING") {
+        responseText = "**⚙️ AI Service Configuration Required**\n\nThe OpenAI API key is not configured on the server. To enable AI-powered responses:\n\n1. Create a `.env` file in the `frontend/` directory\n2. Add your key: `OPENAI_API_KEY=sk-your-key-here`\n3. Restart the server\n\nIn the meantime, you can still use the **Workstation** to design floorplans, the **Cost Estimator** to calculate building costs, and browse our **Resources** section for architectural guides.";
+      } else {
+        responseText = "Sorry, I encountered a connection issue. Please check your internet connection and try again. If the problem persists, the AI service may be temporarily unavailable.";
+      }
+
       setChatMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 2,
           conversationId: conv.id,
           role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
+          content: responseText,
           createdAt: new Date(),
         },
       ]);

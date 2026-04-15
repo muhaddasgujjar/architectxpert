@@ -8,7 +8,7 @@ import type { Express } from "express";
 import type { User } from "@shared/schema";
 import connectPgSimple from "connect-pg-simple";
 import { Pool } from "pg";
-import { pool } from "./db";
+import { pool, sslForPgHost } from "./db";
 
 const scryptAsync = promisify(scrypt);
 
@@ -44,7 +44,7 @@ async function buildSessionStore(): Promise<session.Store> {
     database: _url.pathname.replace(/^\//, ""),
     user:     decodeURIComponent(_url.username),
     password: decodeURIComponent(_url.password),
-    ssl: { rejectUnauthorized: false },
+    ssl: sslForPgHost(_url.hostname),
     connectionTimeoutMillis: 8_000,
     max: 1,
   });

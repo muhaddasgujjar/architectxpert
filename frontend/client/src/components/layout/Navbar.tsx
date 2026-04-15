@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import { Hexagon, Menu, X, LogOut, User, ChevronDown, Layers, FileBarChart, Calculator, Building2 } from "lucide-react";
+import { Hexagon, Menu, X, LogOut, User, ChevronDown, Layers, FileBarChart, Calculator, Building2, PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 
@@ -51,6 +51,8 @@ const toolItems = [
   { label: "Architecture Advisor", href: "/tools/data-scientist", icon: Building2, desc: "AI project recommendations" },
 ];
 
+const workstationItem = { label: "Workstation", href: "/workstation", icon: PenTool, desc: "CAD-like floorplan editor" };
+
 function ToolsDropdown() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -88,6 +90,24 @@ function ToolsDropdown() {
             className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-white/[0.08] bg-[#0c0c14]/95 backdrop-blur-xl shadow-2xl shadow-black/40 overflow-hidden z-50"
           >
             <div className="p-2">
+              {/* Featured: Workstation */}
+              <Link
+                href={workstationItem.href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-accent-blue/[0.08] transition-all duration-200 group mb-1"
+                data-testid="link-tool-workstation"
+              >
+                <div className="w-8 h-8 rounded-lg bg-accent-blue/[0.08] border border-accent-blue/20 flex items-center justify-center group-hover:border-accent-blue/40 group-hover:bg-accent-blue/15 transition-all duration-200">
+                  <workstationItem.icon className="w-4 h-4 text-accent-blue/70 group-hover:text-accent-blue transition-colors duration-200" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium">{workstationItem.label}</div>
+                  <div className="text-[10px] text-white/25 group-hover:text-white/35 transition-colors">{workstationItem.desc}</div>
+                </div>
+              </Link>
+
+              <div className="h-px bg-white/[0.06] my-1 mx-2" />
+
               {toolItems.map((item) => (
                 <Link
                   key={item.label}
@@ -180,14 +200,14 @@ export default function Navbar() {
                   <span data-testid="text-username">{user.username}</span>
                 </motion.div>
                 <motion.a
-                  href="/workspace"
+                  href="/workstation"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.55, duration: 0.5 }}
                   className="spotlight-btn rounded-full px-5 py-2 text-sm font-medium text-white"
                   data-testid="link-workspace"
                 >
-                  Workspace
+                  Workstation
                 </motion.a>
                 <motion.button
                   initial={{ opacity: 0, y: -20 }}
@@ -258,6 +278,15 @@ export default function Navbar() {
               ))}
               <div className="border-t border-white/5 mt-2 pt-2">
                 <p className="px-4 py-2 text-[10px] font-mono text-white/25 uppercase tracking-wider">Tools</p>
+                <Link
+                  href={workstationItem.href}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-accent-blue hover:text-white transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                  data-testid="link-mobile-tool-workstation"
+                >
+                  <PenTool className="w-4 h-4 text-accent-blue/70" />
+                  Workstation
+                </Link>
                 {toolItems.map((item) => (
                   <Link
                     key={item.label}
@@ -279,11 +308,11 @@ export default function Navbar() {
                       <span>{user.username}</span>
                     </div>
                     <a
-                      href="/workspace"
+                      href="/workstation"
                       className="block px-4 py-3 text-sm font-medium text-accent-blue"
                       onClick={() => setMobileOpen(false)}
                     >
-                      Workspace
+                      Workstation
                     </a>
                     <button
                       onClick={() => { logout(); setMobileOpen(false); }}

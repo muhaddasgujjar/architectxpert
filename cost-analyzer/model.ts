@@ -4,6 +4,27 @@ import * as path from "path";
 
 const execFileAsync = promisify(execFile);
 
+const PY_OPTS = { maxBuffer: 12 * 1024 * 1024, timeout: 45_000 };
+
+async function runPythonScript(scriptPath: string, jsonArg: string): Promise<string> {
+  if (process.platform === "win32") {
+    try {
+      const { stdout } = await execFileAsync("py", ["-3", scriptPath, jsonArg], PY_OPTS);
+      return stdout;
+    } catch {
+      const { stdout } = await execFileAsync("python", [scriptPath, jsonArg], PY_OPTS);
+      return stdout;
+    }
+  }
+  try {
+    const { stdout } = await execFileAsync("python3", [scriptPath, jsonArg], PY_OPTS);
+    return stdout;
+  } catch {
+    const { stdout } = await execFileAsync("python", [scriptPath, jsonArg], PY_OPTS);
+    return stdout;
+  }
+}
+
 export interface PredictionInput {
   area: number;
   floors: number;
@@ -38,9 +59,9 @@ export interface PredictionResult {
 
 export async function predict(input: PredictionInput): Promise<PredictionResult> {
   const scriptPath = path.join(import.meta.dirname, "model.py");
-  
+
   try {
-    const { stdout } = await execFileAsync("python", [scriptPath, JSON.stringify(input)]);
+    const stdout = await runPythonScript(scriptPath, JSON.stringify(input));
     const result = JSON.parse(stdout.trim());
     if (result.error) {
       throw new Error(result.error);

@@ -15,7 +15,7 @@
     "dev:cost-analyzer": "npm --workspace=cost-analyzer run start",
     "dev:report-analysis": "npm --workspace=report-analysis run start",
     "dev:floorplan-advisor": "npm --workspace=floorplan-advisor run start",
-    "dev:all": "npx concurrently \"npm run dev:frontend\" \"npm run dev:floorplan-generation\" \"npm run dev:cost-analyzer\" \"npm run dev:report-analysis\""
+    "dev:all": "npx concurrently \"npm run dev:frontend\" \"npm run dev:floorplan-generation\" \"npm run dev:cost-analyzer\" \"npm run dev:report-analysis\" \"npm run dev:floorplan-advisor\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

@@ -123,6 +123,29 @@ export default function FloorplanGenerationPage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadDxf = async () => {
+    if (!result) return;
+    try {
+      const res = await apiRequest("POST", "/api/tools/generate-floorplan-dxf", {
+        bedrooms, bathrooms, totalArea, floors, style, specialRooms, location,
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ArchitectXpert_FloorPlan_${Date.now()}.dxf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "DXF downloaded", description: "Open it in AutoCAD/LibreCAD to edit and annotate." });
+    } catch (e: any) {
+      toast({ title: "DXF export failed", description: e?.message || "Please try again.", variant: "destructive" });
+    }
+  };
+
   const downloadPng = () => {
     if (!result || !svgRef.current) return;
     const svgEl = svgRef.current.querySelector("svg");
@@ -480,6 +503,14 @@ export default function FloorplanGenerationPage() {
                       >
                         <Download className="w-4 h-4" />
                         Download SVG
+                      </button>
+                      <button
+                        onClick={downloadDxf}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.10] text-white/60 hover:text-white text-sm font-medium hover:bg-white/[0.04] transition-colors"
+                        data-testid="button-download-dxf"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download DXF (AutoCAD)
                       </button>
                       <button
                         onClick={goToReport}

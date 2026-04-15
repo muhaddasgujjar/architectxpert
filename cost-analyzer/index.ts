@@ -90,7 +90,8 @@ app.post("/api/tools/predict-market-value", async (req: Request, res: Response):
     res.json(result);
   } catch (error: any) {
     console.error("Market value prediction error:", error);
-    res.status(500).json({ error: "Failed to predict market value" });
+    const msg = error?.message || "Failed to predict market value";
+    res.status(500).json({ error: msg });
   }
 });
 

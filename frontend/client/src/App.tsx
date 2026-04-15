@@ -22,6 +22,7 @@ const EstimateCostPage       = lazy(() => import("@/pages/estimate-cost"));
 const DataScientistPage      = lazy(() => import("@/pages/data-scientist"));
 const UseCasesPage           = lazy(() => import("@/pages/use-cases"));
 const FloorplanGenerationPage = lazy(() => import("@/pages/floorplan-generation"));
+const WorkstationEditorPage  = lazy(() => import("@/pages/workstation"));
 const NotFound               = lazy(() => import("@/pages/not-found"));
 import Demo3DPage from "@/pages/demo-three";
 
@@ -47,6 +48,7 @@ function Router() {
         <Route path="/"                           component={LandingPage} />
         <Route path="/auth"                       component={AuthPage} />
         <Route path="/workspace"                  component={WorkspacePage} />
+        <Route path="/workstation"               component={WorkstationEditorPage} />
         <Route path="/contact"                    component={ContactPage} />
         <Route path="/blog">{() => <Redirect to="/resources?tab=blog" />}</Route>
         <Route path="/resources/:id"              component={ArticlePage} />

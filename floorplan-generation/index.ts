@@ -1,6 +1,6 @@
 import express, { type Request, Response } from "express";
 import cors from "cors";
-import { generateFloorplanSvg, layoutRooms, generateLocalLayout } from "./floorplanSvg.js";
+import { generateFloorplanDxf, generateFloorplanSvg, layoutRooms, generateLocalLayout } from "./floorplanSvg.js";
 
 const app = express();
 app.use(cors());
@@ -43,6 +43,34 @@ app.post("/api/tools/generate-floorplan", async (req: Request, res: Response) =>
   } catch (error) {
     console.error("Floorplan generation error:", error);
     res.status(500).json({ error: "Failed to generate floor plan. Please try again." });
+  }
+});
+
+app.post("/api/tools/generate-floorplan-dxf", async (req: Request, res: Response) => {
+  try {
+    const { bedrooms, bathrooms, totalArea, floors, style, specialRooms } = req.body;
+
+    const numBedrooms = Math.min(Math.max(Number(bedrooms) || 3, 1), 8);
+    const numBathrooms = Math.min(Math.max(Number(bathrooms) || 2, 1), 6);
+    const numArea = Math.min(Math.max(Number(totalArea) || 1800, 400), 20000);
+    const numFloors = Math.min(Math.max(Number(floors) || 1, 1), 3);
+    const extras = Array.isArray(specialRooms) ? specialRooms : [];
+    const houseStyle = style || "Modern";
+
+    const rawLayout = generateLocalLayout(numBedrooms, numBathrooms, numArea, extras);
+    rawLayout.style = houseStyle;
+    rawLayout.floors = numFloors;
+
+    const positionedRooms = layoutRooms(rawLayout);
+    const dxf = generateFloorplanDxf(positionedRooms, rawLayout);
+
+    const filename = `ArchitectXpert_FloorPlan_${Date.now()}.dxf`;
+    res.setHeader("Content-Type", "application/dxf; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=\"${filename}\"`);
+    res.send(dxf);
+  } catch (error) {
+    console.error("Floorplan DXF export error:", error);
+    res.status(500).json({ error: "Failed to export DXF. Please try again." });
   }
 });
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "tsx --env-file=../frontend/.env index.ts"
+    "start": "tsx --env-file=.env index.ts"
   },
   "dependencies": {
     "@architect/shared": "1.0.0",

@@ -1,0 +1,5 @@
+# Zameen Random Forest market valuation (train_model.py + market_model.py RF path)
+numpy>=1.26.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
