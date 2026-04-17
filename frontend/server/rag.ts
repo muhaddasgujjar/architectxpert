@@ -3,9 +3,8 @@ import path from "path";
 import type OpenAI from "openai";
 
 function dirname(): string {
-  return typeof import.meta.dirname !== "undefined"
-    ? import.meta.dirname
-    : path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1"));
+  // When running the server, cwd is the frontend directory.
+  return path.join(process.cwd(), "server");
 }
 
 function cosineSim(a: number[], b: number[]): number {

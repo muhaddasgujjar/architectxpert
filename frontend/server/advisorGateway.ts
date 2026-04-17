@@ -35,11 +35,9 @@ const openai = new OpenAI({
 });
 
 function scriptPath(): string {
-  const base =
-    typeof import.meta.dirname !== "undefined"
-      ? import.meta.dirname
-      : path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1"));
-  return path.resolve(base, "..", "..", "floorplan-advisor", "architecture_advisor.py");
+  // Use process.cwd() (which is the frontend/ folder) to find the script in the parent directory.
+  // This works consistently in both development (tsx) and production (esbuild cjs bundle).
+  return path.resolve(process.cwd(), "..", "floorplan-advisor", "architecture_advisor.py");
 }
 
 function requireSessionUser(req: Request, res: Response): string | null {
