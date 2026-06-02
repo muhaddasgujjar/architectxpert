@@ -55,3 +55,17 @@ cost-analyzer/new_features_dataset.csv
 
 # Local scratch
 scratch.js
+
+# ML model files (too large for git)
+floorplan-generation/checkpoints/
+floorplan-generation/ml_env/
+floorplan-generation/data/
+floorplan-generation/pickle/
+floorplan-generation/samples/
+
+# Screenshots/reference images
+*.png
+*.jpg
+*.jpeg
+!frontend/client/public/**/*.png
+!frontend/client/public/**/*.jpg

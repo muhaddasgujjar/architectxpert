@@ -13,6 +13,179 @@ export interface FloorplanResult {
   totalWidth: number;
   totalHeight: number;
   totalArea: number;
+  source?: string;
+  image_base64?: string;
+  image_format?: "png" | "svg";
+  svg?: string;
+  confidence?: number;
+  costEstimatePKR?: number;
+  costFormatted?: string;
+  layoutNotes?: string;
+  pipeline?: {
+    ready: boolean;
+    device: string;
+    lcm_loaded: boolean;
+    fooocus_applied: boolean;
+    vram_used_mb: number;
+    vram_total_mb: number;
+  };
+  prompt_used?: string;
+  generation_time_ms?: number;
+}
+
+export type DiffusionMode = "img2img" | "txt2img";
+
+export interface DiffusionParams {
+  bedrooms: number;
+  bathrooms: number;
+  totalArea: number;
+  floors: number;
+  style: string;
+  specialRooms: string[];
+  location: string;
+  seed?: number;
+  steps?: number;
+  guidance_scale?: number;
+  strength?: number;
+  width?: number;
+  height?: number;
+  use_prompt_engineer?: boolean;
+  mode?: DiffusionMode;
+}
+
+/**
+ * Call the floorplan generation API and return a full FloorplanResult.
+ * Falls back to local generateFloorplan() if the API request fails.
+ */
+export async function generateFloorplanFromApi(params: {
+  bedrooms: number;
+  bathrooms: number;
+  totalArea: number;
+  floors: number;
+  style: string;
+  specialRooms: string[];
+  location: string;
+  seed?: number;
+}): Promise<FloorplanResult> {
+  try {
+    const res = await fetch("/api/tools/generate-floorplan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...params, output_size: 512 }),
+    });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+
+    // Normalize API rooms to frontend Room shape
+    const rooms: Room[] = (data.rooms || []).map((r: any) => {
+      const colors = getColorForRoom(r.type || r.name || "Room");
+      return {
+        name: r.type || r.name || "Room",
+        x: r.x ?? 0,
+        y: r.y ?? 0,
+        width: r.width ?? 60,
+        height: r.height ?? 60,
+        color: colors.bg,
+        textColor: colors.text,
+      };
+    });
+
+    const totalArea = data.totalArea || params.totalArea;
+    const aspect = Math.sqrt(totalArea / (4 / 3));
+    const svgW = Math.round(aspect * (4 / 3));
+    const svgH = Math.round(aspect);
+
+    return {
+      rooms,
+      totalWidth: svgW,
+      totalHeight: svgH,
+      totalArea,
+      source: data.source ?? "algorithmic",
+      image_base64: data.image_base64,
+      image_format: data.image_format ?? "svg",
+      svg: data.svg,
+      confidence: data.confidence,
+      costEstimatePKR: data.costEstimatePKR,
+      costFormatted: data.costFormatted,
+      layoutNotes: data.layoutNotes,
+    };
+  } catch (err) {
+    console.warn("[floorplanGenerator] API failed, using local fallback:", err);
+    return generateFloorplan(
+      params.totalArea,
+      Math.round(params.totalArea * 0.75),
+      `${params.bedrooms} bed ${params.bathrooms} bath ${params.style}`
+    );
+  }
+}
+
+/**
+ * Call the SDXL diffusion pipeline (real Stable Diffusion XL + LCM-LoRA).
+ * First request takes ~60-90s to load the model, subsequent: 3-8s.
+ */
+export async function generateFloorplanDiffusion(params: DiffusionParams): Promise<FloorplanResult> {
+  const res = await fetch("/api/tools/generate-floorplan-diffusion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || err.detail || `Diffusion API error ${res.status}`);
+  }
+
+  const data = await res.json();
+
+  const rooms: Room[] = (data.rooms || []).map((r: any) => {
+    const colors = getColorForRoom(r.type || r.name || "Room");
+    return {
+      name: r.type || r.name || "Room",
+      x: r.x ?? 0,
+      y: r.y ?? 0,
+      width: r.width ?? 60,
+      height: r.height ?? 60,
+      color: colors.bg,
+      textColor: colors.text,
+    };
+  });
+
+  return {
+    rooms,
+    totalWidth: data.image_width || 1024,
+    totalHeight: data.image_height || 1024,
+    totalArea: data.totalArea || params.totalArea,
+    source: data.source || "sdxl_lcm_diffusion",
+    image_base64: data.image_base64,
+    image_format: "png",
+    confidence: data.confidence,
+    costEstimatePKR: data.costEstimatePKR,
+    costFormatted: data.costFormatted,
+    pipeline: data.pipeline,
+    prompt_used: data.prompt_used,
+    generation_time_ms: data.generation_time_ms,
+  };
+}
+
+/**
+ * Check SDXL pipeline status without triggering a load.
+ */
+export async function getSDXLStatus(): Promise<{
+  loaded: boolean;
+  loading: boolean;
+  device?: string;
+  lcm_loaded?: boolean;
+  fooocus_applied?: boolean;
+  vram_used_mb?: number;
+  vram_total_mb?: number;
+}> {
+  try {
+    const res = await fetch("/api/tools/sdxl-status");
+    if (!res.ok) return { loaded: false, loading: false };
+    return await res.json();
+  } catch {
+    return { loaded: false, loading: false };
+  }
 }
 
 const roomColors: Record<string, { bg: string; text: string }> = {

@@ -1,8 +1,8 @@
 # ============================================================
 # ArchitectXpert — Python Dependencies
 # ============================================================
-# Install with:  pip install -r requirements.txt
-# Freeze with:   pip freeze > requirements.txt
+# Full install:  pip install -r requirements.txt
+# ML-only:       pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
 # ============================================================
 
 # --- Core ML / Data (cost-analyzer) ---
@@ -11,7 +11,7 @@ pandas==3.0.2
 scikit-learn==1.8.0
 joblib==1.5.3
 
-# --- Image Processing (report-analysis) ---
+# --- Image Processing (report-analysis + floorplan ML) ---
 pillow==12.2.0
 
 # --- Transitive Dependencies ---
@@ -20,3 +20,48 @@ threadpoolctl==3.6.0
 python-dateutil==2.9.0.post0
 six==1.17.0
 tzdata==2026.1
+
+# ============================================================
+# Floorplan ML Model (floorplan-generation/ml/)
+# Install PyTorch separately first — pick the right CUDA build:
+#
+#   RTX 3060 (CUDA 12.1):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+#   CPU only (no GPU):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# ============================================================
+
+# --- Deep Learning ---
+# torch>=2.2.0        # install separately via PyTorch wheel (see above)
+# torchvision>=0.17.0 # install separately
+
+# --- Inference Server ---
+fastapi==0.115.12
+uvicorn[standard]==0.34.3
+pydantic==2.11.4
+httpx==0.28.1
+
+# --- Training Utilities ---
+tqdm==4.67.1
+
+# ============================================================
+# SDXL Diffusion Pipeline (floorplan-generation/ml/sdxl_pipeline.py)
+# Requires: RTX 3060 12GB+ with CUDA 12.1
+#
+#   pip install -r requirements.txt
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# ============================================================
+
+# --- Diffusion / Stable Diffusion XL ---
+diffusers>=0.28.0
+transformers>=4.40.0
+accelerate>=0.30.0
+safetensors>=0.4.3
+huggingface-hub>=0.23.0
+
+# --- LoRA / PEFT support ---
+peft>=0.11.0
+
+# --- Memory-efficient attention (optional but recommended) ---
+# xformers>=0.0.26   # Uncomment if installing from source for RTX 3060

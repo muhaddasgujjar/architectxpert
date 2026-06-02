@@ -197,8 +197,20 @@ export default function Navbar() {
                   <div className="w-6 h-6 rounded-full bg-accent-blue/20 border border-accent-blue/30 flex items-center justify-center">
                     <User className="w-3 h-3 text-accent-blue" />
                   </div>
-                  <span data-testid="text-username">{user.username}</span>
+                  <span data-testid="text-username">{user.fullName}</span>
                 </motion.div>
+                {(user as any).role === "admin" && (
+                  <motion.a
+                    href="/admin"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.52, duration: 0.5 }}
+                    className="text-xs font-mono px-3 py-1.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                    data-testid="link-admin"
+                  >
+                    Admin
+                  </motion.a>
+                )}
                 <motion.a
                   href="/workstation"
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -305,8 +317,17 @@ export default function Navbar() {
                   <>
                     <div className="px-4 py-3 text-sm text-white/50 flex items-center gap-2">
                       <User className="w-3.5 h-3.5" />
-                      <span>{user.username}</span>
+                      <span>{user.fullName}</span>
                     </div>
+                    {(user as any).role === "admin" && (
+                      <a
+                        href="/admin"
+                        className="block px-4 py-3 text-sm font-medium text-red-400"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Admin Dashboard
+                      </a>
+                    )}
                     <a
                       href="/workstation"
                       className="block px-4 py-3 text-sm font-medium text-accent-blue"

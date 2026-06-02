@@ -24,6 +24,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Preloader from "../components/ui/Preloader";
+import PageParticles from "@/components/ui/PageParticles";
 import { generateFloorplan, type FloorplanResult } from "../lib/floorplanGenerator";
 import { useAuth } from "@/hooks/use-auth";
 import { use3DTilt, fadeUp, fadeLeft, fadeRight, staggerContainer, smoothTransition, defaultViewport } from "@/lib/animations";
@@ -74,6 +75,12 @@ function FloorplanViewer({ result }: { result: FloorplanResult }) {
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const { rotateX, rotateY, onMouseMove, onMouseLeave } = use3DTilt(6);
 
+  const zoomControls = [
+    { icon: ZoomIn,    label: "Zoom in",    onClick: () => setZoom(z => Math.min(z + 0.2, 3)),   testid: "button-zoom-in" },
+    { icon: ZoomOut,   label: "Zoom out",   onClick: () => setZoom(z => Math.max(z - 0.2, 0.3)), testid: "button-zoom-out" },
+    { icon: Maximize2, label: "Reset zoom", onClick: () => setZoom(1),                             testid: "button-zoom-reset" },
+  ];
+
   return (
     <motion.div
       className="relative w-full h-full flex items-center justify-center"
@@ -85,11 +92,7 @@ function FloorplanViewer({ result }: { result: FloorplanResult }) {
     >
       {/* Zoom controls */}
       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
-        {[
-          { icon: ZoomIn,   label: "Zoom in",    onClick: () => setZoom(z => Math.min(z + 0.2, 2)),   testid: "button-zoom-in" },
-          { icon: ZoomOut,  label: "Zoom out",   onClick: () => setZoom(z => Math.max(z - 0.2, 0.5)), testid: "button-zoom-out" },
-          { icon: Maximize2, label: "Reset zoom", onClick: () => setZoom(1),                            testid: "button-zoom-reset" },
-        ].map(({ icon: Icon, label, onClick, testid }) => (
+        {zoomControls.map(({ icon: Icon, label, onClick, testid }) => (
           <motion.button
             key={testid}
             onClick={onClick}
@@ -104,89 +107,113 @@ function FloorplanViewer({ result }: { result: FloorplanResult }) {
         ))}
       </div>
 
-      <motion.svg
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        viewBox={`0 0 ${result.totalWidth} ${result.totalHeight}`}
-        className="w-full h-full max-w-full max-h-full"
-        style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
-        data-testid="floorplan-svg"
-      >
-        <rect
-          x="0" y="0"
-          width={result.totalWidth} height={result.totalHeight}
-          fill="rgba(255,255,255,0.01)" stroke="rgba(255,255,255,0.08)"
-          strokeWidth="1" rx="4"
+      {/* ML source badge */}
+      {result.image_base64 && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2 py-1 rounded-full bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-[10px] font-mono">
+          <Sparkles className="w-2.5 h-2.5" />
+          AI Generated
+        </div>
+      )}
+
+      {/* ── ML PNG path ── */}
+      {result.image_base64 ? (
+        <motion.img
+          key="ml-image"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          src={`data:image/png;base64,${result.image_base64}`}
+          alt="AI-generated floorplan"
+          className="max-w-full max-h-full object-contain rounded-lg"
+          style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
+          data-testid="floorplan-image"
         />
+      ) : (
+        /* ── SVG fallback path ── */
+        <motion.svg
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          viewBox={`0 0 ${result.totalWidth} ${result.totalHeight}`}
+          className="w-full h-full max-w-full max-h-full"
+          style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
+          data-testid="floorplan-svg"
+        >
+          <rect
+            x="0" y="0"
+            width={result.totalWidth} height={result.totalHeight}
+            fill="rgba(255,255,255,0.01)" stroke="rgba(255,255,255,0.08)"
+            strokeWidth="1" rx="4"
+          />
 
-        {result.rooms.map((room, i) => (
-          <motion.g
-            key={`${room.name}-${i}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08, duration: 0.5 }}
-            onMouseEnter={() => setHoveredRoom(room.name)}
-            onMouseLeave={() => setHoveredRoom(null)}
-          >
-            <rect
-              x={room.x} y={room.y}
-              width={room.width} height={room.height}
-              fill={hoveredRoom === room.name ? room.color.replace(/[\d.]+\)$/, "0.15)") : room.color}
-              stroke={room.textColor}
-              strokeWidth={hoveredRoom === room.name ? "1.5" : "0.8"}
-              rx="2"
-              className="transition-all duration-300"
-            />
-            <text
-              x={room.x + room.width / 2}
-              y={room.y + room.height / 2 - 4}
-              fill={room.textColor}
-              fontSize={room.width < 60 ? "7" : "9"}
-              fontFamily="monospace"
-              textAnchor="middle"
-              dominantBaseline="middle"
+          {result.rooms.map((room, i) => (
+            <motion.g
+              key={`${room.name}-${i}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08, duration: 0.5 }}
+              onMouseEnter={() => setHoveredRoom(room.name)}
+              onMouseLeave={() => setHoveredRoom(null)}
             >
-              {room.name}
-            </text>
-            <text
-              x={room.x + room.width / 2}
-              y={room.y + room.height / 2 + 10}
-              fill={room.textColor.replace(/[\d.]+\)$/, "0.3)")}
-              fontSize="6"
-              fontFamily="monospace"
-              textAnchor="middle"
-              dominantBaseline="middle"
-            >
-              {room.width > 50 ? `${Math.round(room.width / 10)}'x${Math.round(room.height / 10)}'` : ""}
-            </text>
+              <rect
+                x={room.x} y={room.y}
+                width={room.width} height={room.height}
+                fill={hoveredRoom === room.name ? room.color.replace(/[\d.]+\)$/, "0.15)") : room.color}
+                stroke={room.textColor}
+                strokeWidth={hoveredRoom === room.name ? "1.5" : "0.8"}
+                rx="2"
+                className="transition-all duration-300"
+              />
+              <text
+                x={room.x + room.width / 2}
+                y={room.y + room.height / 2 - 4}
+                fill={room.textColor}
+                fontSize={room.width < 60 ? "7" : "9"}
+                fontFamily="monospace"
+                textAnchor="middle"
+                dominantBaseline="middle"
+              >
+                {room.name}
+              </text>
+              <text
+                x={room.x + room.width / 2}
+                y={room.y + room.height / 2 + 10}
+                fill={room.textColor.replace(/[\d.]+\)$/, "0.3)")}
+                fontSize="6"
+                fontFamily="monospace"
+                textAnchor="middle"
+                dominantBaseline="middle"
+              >
+                {room.width > 50 ? `${Math.round(room.width / 10)}'x${Math.round(room.height / 10)}'` : ""}
+              </text>
 
-            {hoveredRoom === room.name && (
-              <circle cx={room.x + room.width / 2} cy={room.y + room.height / 2} r="3" fill={room.textColor}>
-                <animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite" />
-              </circle>
-            )}
-          </motion.g>
-        ))}
+              {hoveredRoom === room.name && (
+                <circle cx={room.x + room.width / 2} cy={room.y + room.height / 2} r="3" fill={room.textColor}>
+                  <animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite" />
+                </circle>
+              )}
+            </motion.g>
+          ))}
 
-        {result.rooms.length > 1 &&
-          result.rooms.slice(0, -1).map((room, i) => {
-            const next = result.rooms[i + 1];
-            if (!next) return null;
-            const x1 = room.x + room.width;
-            if (Math.abs(x1 - next.x) < 4 || Math.abs(room.y - next.y) < 4) {
-              return (
-                <line key={`line-${i}`}
-                  x1={x1} y1={room.y + room.height * 0.3}
-                  x2={x1} y2={room.y + room.height * 0.7}
-                  stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeDasharray="4"
-                />
-              );
-            }
-            return null;
-          })}
-      </motion.svg>
+          {result.rooms.length > 1 &&
+            result.rooms.slice(0, -1).map((room, i) => {
+              const next = result.rooms[i + 1];
+              if (!next) return null;
+              const x1 = room.x + room.width;
+              if (Math.abs(x1 - next.x) < 4 || Math.abs(room.y - next.y) < 4) {
+                return (
+                  <line key={`line-${i}`}
+                    x1={x1} y1={room.y + room.height * 0.3}
+                    x2={x1} y2={room.y + room.height * 0.7}
+                    stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeDasharray="4"
+                  />
+                );
+              }
+              return null;
+            })}
+        </motion.svg>
+      )}
     </motion.div>
   );
 }
@@ -398,7 +425,8 @@ export default function WorkspacePage() {
     <>
       <Preloader isVisible={pageLoading} text="Initializing Workspace" />
 
-      <div ref={pageRef} className="noise-overlay min-h-screen bg-obsidian overflow-hidden">
+      <div ref={pageRef} className="noise-overlay min-h-screen bg-obsidian overflow-hidden relative">
+        <PageParticles count={300} />
         {/* Parallax background glow */}
         <motion.div
           style={{ y: bgY }}

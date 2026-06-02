@@ -19,11 +19,13 @@ export async function registerRoutes(
   const COST_URL = process.env.COST_SERVICE_URL || 'http://localhost:8001';
   const REPORT_URL = process.env.REPORT_SERVICE_URL || 'http://localhost:8002';
 
-  function makeProxy(target: string, paths: string[]) {
+  function makeProxy(target: string, paths: string[], timeoutMs = 120000) {
     return createProxyMiddleware({
       target,
       changeOrigin: true,
       pathFilter: paths,
+      timeout: timeoutMs,
+      proxyTimeout: timeoutMs,
       on: {
         proxyReq: (proxyReq: any, req: any) => {
           // Forward the authenticated user ID to the microservices
@@ -49,8 +51,9 @@ export async function registerRoutes(
   // 1. Floor Plan Generator
   app.use(makeProxy(FLOORPLAN_URL, [
     '/api/tools/generate-floorplan',
+    '/api/tools/generate-floorplan-pro',
     '/api/tools/generate-floorplan-dxf',
-  ]));
+  ], 180000));
 
   // 2. Cost Analyzer (API endpoints + Folium map static file)
   app.use(makeProxy(COST_URL, [

@@ -6,15 +6,21 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AuthUser {
   id: string;
-  username: string;
+  fullName: string;
+  email: string;
+  role: string;
+  isVerified: boolean;
+  createdAt: string;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (fullName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (token: string, password: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -31,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/auth/login", { username, password });
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/auth/login", { email, password });
       return res.json();
     },
     onSuccess: () => {
@@ -49,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/auth/register", { username, password });
+    mutationFn: async ({ fullName, email, password }: { fullName: string; email: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/auth/register", { fullName, email, password });
       return res.json();
     },
     onSuccess: () => {
@@ -81,14 +87,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user: user ?? null,
         isLoading,
-        login: async (username, password) => {
-          await loginMutation.mutateAsync({ username, password });
+        login: async (email, password) => {
+          await loginMutation.mutateAsync({ email, password });
         },
-        register: async (username, password) => {
-          await registerMutation.mutateAsync({ username, password });
+        register: async (fullName, email, password) => {
+          await registerMutation.mutateAsync({ fullName, email, password });
         },
         logout: async () => {
           await logoutMutation.mutateAsync();
+        },
+        forgotPassword: async (email: string) => {
+          const res = await apiRequest("POST", "/api/auth/forgot-password", { email });
+          const data = await res.json();
+          return data.message;
+        },
+        resetPassword: async (token: string, password: string) => {
+          const res = await apiRequest("POST", "/api/auth/reset-password", { token, password });
+          const data = await res.json();
+          return data.message;
         },
       }}
     >
