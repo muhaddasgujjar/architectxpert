@@ -5,7 +5,15 @@ import { predict } from "./model.js";
 import { predictMarketValue } from "./market_model.js";
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://architectxpert.tech",
+    "https://www.architectxpert.tech",
+    /\.vercel\.app$/,
+    ...(process.env.NODE_ENV !== "production" ? ["http://localhost:5000", "http://localhost:3000"] : []),
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 // Serve house_price_map.html statically at /maps/house_price_map.html

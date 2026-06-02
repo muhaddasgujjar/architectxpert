@@ -21,7 +21,15 @@ const upload = multer({
 });
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://architectxpert.tech",
+    "https://www.architectxpert.tech",
+    /\.vercel\.app$/,
+    ...(process.env.NODE_ENV !== "production" ? ["http://localhost:5000", "http://localhost:3000"] : []),
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 // ──────────────────────────────────────────────────────────────────────────

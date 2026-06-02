@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "tsx --env-file=.env index.ts"
+    "start": "npx tsx index.ts",
+    "dev": "tsx --env-file=.env index.ts"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

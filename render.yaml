@@ -1,0 +1,51 @@
+services:
+  # ─── Floorplan Generation Service ─────────────────────────────────────────
+  - type: web
+    name: architectxpert-floorplan
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: floorplan-generation
+    buildCommand: npm install
+    startCommand: npx tsx index.ts
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: NODE_ENV
+        value: production
+
+  # ─── Cost Analyzer Service ────────────────────────────────────────────────
+  - type: web
+    name: architectxpert-cost
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: cost-analyzer
+    buildCommand: npm install
+    startCommand: npx tsx index.ts
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+
+  # ─── Report Analysis Service ──────────────────────────────────────────────
+  - type: web
+    name: architectxpert-report
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: report-analysis
+    buildCommand: npm install
+    startCommand: npx tsx index.ts
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production

@@ -69,3 +69,4 @@ floorplan-generation/samples/
 *.jpeg
 !frontend/client/public/**/*.png
 !frontend/client/public/**/*.jpg
+.vercel

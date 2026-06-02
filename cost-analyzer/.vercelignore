@@ -1,0 +1,9 @@
+node_modules
+**/*.pkl
+**/*.csv
+house_price_map.html
+*.py
+*.log
+session.log
+test_request.json
+requirements.txt
