@@ -1,6 +1,6 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, copyFile, mkdir } from "fs/promises";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -59,6 +59,10 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
+
+  // Copy runtime assets that are read via fs at runtime
+  await copyFile("server/architect_knowledge.md", "dist/architect_knowledge.md");
+  console.log("copied architect_knowledge.md to dist/");
 }
 
 buildAll().catch((err) => {

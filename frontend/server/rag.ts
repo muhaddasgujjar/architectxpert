@@ -3,7 +3,10 @@ import path from "path";
 import type OpenAI from "openai";
 
 function dirname(): string {
-  // When running the server, cwd is the frontend directory.
+  // Use __dirname for bundled environments (Vercel), fallback to cwd for dev
+  if (typeof __dirname !== "undefined") {
+    return __dirname;
+  }
   return path.join(process.cwd(), "server");
 }
 
