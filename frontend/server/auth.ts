@@ -57,7 +57,7 @@ async function buildSessionStore(): Promise<session.Store> {
     user: decodeURIComponent(_url.username),
     password: decodeURIComponent(_url.password),
     ssl: sslForPgHost(_url.hostname),
-    connectionTimeoutMillis: 8_000,
+    connectionTimeoutMillis: 15_000,
     max: 1,
   });
 

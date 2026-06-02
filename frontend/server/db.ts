@@ -24,9 +24,9 @@ export const pool = new Pool({
   user:     decodeURIComponent(_dbUrl.username),
   password: decodeURIComponent(_dbUrl.password),
   ssl: sslForPgHost(_dbUrl.hostname),
-  connectionTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 15_000,
   idleTimeoutMillis:       30_000,
-  max: 10,
+  max: process.env.VERCEL ? 3 : 10,
 });
 
 pool.on("error", (err) => {

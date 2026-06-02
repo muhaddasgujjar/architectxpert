@@ -75,7 +75,9 @@ const bootPromise = (async () => {
     return res.status(status).json({ message });
   });
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.VERCEL) {
+    // On Vercel, static files are served by @vercel/static — no need for serveStatic
+  } else if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
     const { setupVite } = await import("./vite");
@@ -92,8 +94,9 @@ const bootPromise = (async () => {
   }
 })();
 
-// Export for Vercel serverless
-export default async function handler(req: any, res: any) {
+// Export for Vercel serverless (CJS compatible)
+module.exports = app;
+(module.exports as any).default = async function handler(req: any, res: any) {
   await bootPromise;
   app(req, res);
-}
+};
