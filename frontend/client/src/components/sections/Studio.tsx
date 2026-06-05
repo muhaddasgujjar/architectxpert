@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { Play, Monitor, Cpu, Globe } from "lucide-react";
-import floorplanImage from "@assets/floorplan_showcase.png";
+const floorplanImage = "/floorplan_showcase.png";
 
 export default function Studio() {
   const sectionRef = useRef(null);
