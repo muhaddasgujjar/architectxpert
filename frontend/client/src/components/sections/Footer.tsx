@@ -1,5 +1,4 @@
-import { Hexagon } from "lucide-react";
-import { SiGithub, SiX, SiLinkedin } from "react-icons/si";
+import { Hexagon, Github, Twitter, Linkedin } from "lucide-react";
 
 const footerLinks = {
   Product: [
@@ -36,13 +35,13 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3">
               <span className="text-white/10 cursor-default" aria-label="GitHub" data-testid="link-github">
-                <SiGithub className="w-4 h-4" />
+                <Github className="w-4 h-4" />
               </span>
               <span className="text-white/10 cursor-default" aria-label="Twitter" data-testid="link-twitter">
-                <SiX className="w-4 h-4" />
+                <Twitter className="w-4 h-4" />
               </span>
               <span className="text-white/10 cursor-default" aria-label="LinkedIn" data-testid="link-linkedin">
-                <SiLinkedin className="w-4 h-4" />
+                <Linkedin className="w-4 h-4" />
               </span>
             </div>
           </div>
