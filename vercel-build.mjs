@@ -31,7 +31,7 @@ cpSync('frontend/dist/architect_knowledge.md', join(fnDir, 'architect_knowledge.
 writeFileSync(join(fnDir, '.vc-config.json'), JSON.stringify({
   runtime: 'nodejs24.x',
   handler: 'index.cjs',
-  maxDuration: 30,
+  maxDuration: 60,
   launcherType: 'Nodejs',
   shouldAddHelpers: true
 }, null, 2));
