@@ -1,29 +1,4 @@
 {
   "version": 2,
-  "installCommand": "cd frontend && npm install && npm run build",
-  "builds": [
-    {
-      "src": "frontend/dist/index.cjs",
-      "use": "@vercel/node",
-      "config": {
-        "maxLambdaSize": "50mb",
-        "includeFiles": "frontend/dist/architect_knowledge.md"
-      }
-    },
-    {
-      "src": "frontend/dist/public/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/frontend/dist/index.cjs" },
-    { "src": "/assets/(.*)", "dest": "/frontend/dist/public/assets/$1" },
-    { "src": "/favicon.svg", "dest": "/frontend/dist/public/favicon.svg" },
-    { "src": "/blueprint-hero.png", "dest": "/frontend/dist/public/blueprint-hero.png" },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|eot|map))",
-      "dest": "/frontend/dist/public/$1"
-    },
-    { "src": "/(.*)", "dest": "/frontend/dist/public/index.html", "status": 200 }
-  ]
+  "buildCommand": "cd frontend && npm install && npm run build && cd .. && node vercel-build.mjs"
 }
