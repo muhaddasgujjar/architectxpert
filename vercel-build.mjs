@@ -36,4 +36,13 @@ writeFileSync(join(fnDir, '.vc-config.json'), JSON.stringify({
   shouldAddHelpers: true
 }, null, 2));
 
+// Inject service URLs as a .env loader prepended to the function
+const envLoader = `
+process.env.FLOORPLAN_SERVICE_URL = process.env.FLOORPLAN_SERVICE_URL || 'https://architectxpert-floorplan.onrender.com';
+process.env.COST_SERVICE_URL = process.env.COST_SERVICE_URL || 'https://architectxpert-cost.onrender.com';
+process.env.REPORT_SERVICE_URL = process.env.REPORT_SERVICE_URL || 'https://architectxpert-report.onrender.com';
+`;
+const original = readFileSync(join(fnDir, 'index.cjs'), 'utf8');
+writeFileSync(join(fnDir, 'index.cjs'), envLoader + original);
+
 console.log('Build Output API structure created successfully.');
