@@ -2,5 +2,5 @@
   "version": 2,
   "framework": null,
   "installCommand": "echo skipping",
-  "buildCommand": "cd frontend && npm install && npm run build && cd .. && node vercel-build.mjs"
+  "buildCommand": "cd frontend && rm -f package-lock.json && npm install && npm run build && cd .. && node vercel-build.mjs"
 }
