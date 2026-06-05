@@ -2,5 +2,5 @@
   "version": 2,
   "framework": null,
   "installCommand": "echo skipping",
-  "buildCommand": "cd frontend && rm -f package-lock.json && npm install && npm run build && cd .. && node vercel-build.mjs"
+  "buildCommand": "rm -f package-lock.json && rm -rf node_modules && cd frontend && rm -f package-lock.json && npm install --install-strategy=nested && npm run build && cd .. && node vercel-build.mjs"
 }
